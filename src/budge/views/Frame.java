@@ -5,17 +5,92 @@
  */
 package budge.views;
 
+import budge.Main;
+import budge.service.StatementParsingService;
+import budge.utils.FileDrop;
+import budge.utils.Utils;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
+
 /**
  *
  * @author pat
  */
 public class Frame extends javax.swing.JFrame {
 
+    StatementParsingService statementParsingService;
+
+    List<File> filesToProcess = new ArrayList<>();
+    
     /**
      * Creates new form Frame
      */
     public Frame() {
         initComponents();
+        
+        statementParsingService = Main.getStatementParsingService();
+        
+        // <editor-fold defaultstate="collapsed" desc="Filedrop configuration">    
+        // taken from the FileDrop example
+        new FileDrop(System.out, filesTextArea, (File[] files) -> {
+            // create an arraylist of files and traverse it
+            ArrayList<File> fileList = new ArrayList<>();
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    fileList = Utils.listFiles(file, fileList);
+                } else {
+                    fileList.add(file);
+                }
+            }
+            
+            String names = "";
+            for(File file : fileList) {
+                names = names.concat(file.getName()).concat("\n");
+            }
+
+            if(filesToProcess.isEmpty()) {
+                filesToProcess = fileList;
+            } else {
+                for (File file : fileList) {
+                    if(!filesToProcess.contains(file)) {
+                        filesToProcess.add(file);
+                    }
+                }
+            }
+
+            filesTextArea.setText(names);
+            processButton.setEnabled(true);
+        });
+        // </editor-fold>
+    }
+    
+    public void process() {
+        statementParsingService.process(filesToProcess);
+    }
+    
+    public void download() {
+        JOptionPane.showMessageDialog(
+                this, 
+                "Not implemented yet!", 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE, 
+                new ImageIcon(this.getClass().getResource("/resources/img/b.png")));
+    }
+    
+    public void clear() {
+        filesTextArea.setText("");
+        filesToProcess.clear();
+    }
+    
+    public void openTableView() {
+        Main.openTableView();
+    }
+    
+    public void updateText(String line) {
+        log.setText(log.getText() + "\n" + line);
     }
 
     /**
@@ -31,20 +106,28 @@ public class Frame extends javax.swing.JFrame {
         headerLabelText = new javax.swing.JLabel();
         downloadButton = new javax.swing.JButton();
         downloadLabel = new javax.swing.JLabel();
-        uploadButton = new javax.swing.JButton();
-        fileLabel = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         log = new javax.swing.JTextArea();
         processButton = new javax.swing.JButton();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        filesTextArea = new javax.swing.JTextArea();
+        jSeparator1 = new javax.swing.JSeparator();
+        jLabel1 = new javax.swing.JLabel();
+        clearButton = new javax.swing.JButton();
+        jButton1 = new javax.swing.JButton();
+        jMenuBar1 = new javax.swing.JMenuBar();
+        fileMenu = new javax.swing.JMenu();
+        rulesMenu = new javax.swing.JMenu();
+        openRulesEditorItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        headerLabelImage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/b.png"))); // NOI18N
+        headerLabelImage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/img/b.png"))); // NOI18N
 
         headerLabelText.setFont(new java.awt.Font("Lucida Grande", 0, 48)); // NOI18N
         headerLabelText.setText("udge");
 
-        downloadButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/excel.png"))); // NOI18N
+        downloadButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/img/excel.png"))); // NOI18N
         downloadButton.setEnabled(false);
         downloadButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -55,18 +138,6 @@ public class Frame extends javax.swing.JFrame {
         downloadLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         downloadLabel.setText("Download");
         downloadLabel.setEnabled(false);
-
-        uploadButton.setText("Upload");
-        uploadButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                uploadButtonActionPerformed(evt);
-            }
-        });
-
-        fileLabel.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
-        fileLabel.setMaximumSize(new java.awt.Dimension(248, 16));
-        fileLabel.setMinimumSize(new java.awt.Dimension(248, 16));
-        fileLabel.setSize(new java.awt.Dimension(248, 16));
 
         jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
@@ -83,6 +154,47 @@ public class Frame extends javax.swing.JFrame {
             }
         });
 
+        jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+        filesTextArea.setEditable(false);
+        filesTextArea.setColumns(20);
+        filesTextArea.setRows(6);
+        jScrollPane2.setViewportView(filesTextArea);
+
+        jLabel1.setText("Drag and drop the files/folder below");
+
+        clearButton.setText("Clear");
+        clearButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clearButtonActionPerformed(evt);
+            }
+        });
+
+        jButton1.setText("Table View");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
+        fileMenu.setText("File");
+        jMenuBar1.add(fileMenu);
+
+        rulesMenu.setText("Rules");
+
+        openRulesEditorItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_R, java.awt.event.InputEvent.SHIFT_DOWN_MASK | java.awt.event.InputEvent.META_DOWN_MASK));
+        openRulesEditorItem.setText("Open Rules Editor");
+        openRulesEditorItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                openRulesEditorItemActionPerformed(evt);
+            }
+        });
+        rulesMenu.add(openRulesEditorItem);
+
+        jMenuBar1.add(rulesMenu);
+
+        setJMenuBar(jMenuBar1);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -90,26 +202,30 @@ public class Frame extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1)
+                    .addComponent(jSeparator1)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                            .addComponent(uploadButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(headerLabelImage, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(headerLabelText, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addComponent(fileLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 248, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(0, 0, Short.MAX_VALUE))
+                                .addComponent(headerLabelImage, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(headerLabelText, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jScrollPane2))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(processButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(clearButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                                 .addGap(0, 0, Short.MAX_VALUE)
-                                .addComponent(processButton)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(downloadButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(downloadLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                                .addComponent(jButton1))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 248, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(downloadButton)
+                            .addComponent(downloadLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(jScrollPane1))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -119,80 +235,74 @@ public class Frame extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(headerLabelImage, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(headerLabelText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(19, 19, 19)
+                .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane2)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(downloadButton)
+                        .addComponent(clearButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(downloadLabel))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(uploadButton)
+                        .addComponent(processButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(fileLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(processButton)))
+                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 141, Short.MAX_VALUE)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(downloadButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(downloadLabel)
                 .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void uploadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_uploadButtonActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_uploadButtonActionPerformed
-
     private void processButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_processButtonActionPerformed
-        // TODO add your handling code here:
+        process();
     }//GEN-LAST:event_processButtonActionPerformed
 
     private void downloadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_downloadButtonActionPerformed
-        // TODO add your handling code here:
+        download();
     }//GEN-LAST:event_downloadButtonActionPerformed
+
+    private void clearButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearButtonActionPerformed
+        clear();
+    }//GEN-LAST:event_clearButtonActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        openTableView();
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void openRulesEditorItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openRulesEditorItemActionPerformed
+        Main.openRulesEditor();
+    }//GEN-LAST:event_openRulesEditorItemActionPerformed
 
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(Frame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(Frame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(Frame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(Frame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> {
-            new Frame().setVisible(true);
-        });
-    }
+    public static void main(String args[]) {}
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton clearButton;
     private javax.swing.JButton downloadButton;
     private javax.swing.JLabel downloadLabel;
-    private javax.swing.JLabel fileLabel;
+    private javax.swing.JMenu fileMenu;
+    private javax.swing.JTextArea filesTextArea;
     private javax.swing.JLabel headerLabelImage;
     private javax.swing.JLabel headerLabelText;
+    private javax.swing.JButton jButton1;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JSeparator jSeparator1;
     private javax.swing.JTextArea log;
+    private javax.swing.JMenuItem openRulesEditorItem;
     private javax.swing.JButton processButton;
-    private javax.swing.JButton uploadButton;
+    private javax.swing.JMenu rulesMenu;
     // End of variables declaration//GEN-END:variables
 }

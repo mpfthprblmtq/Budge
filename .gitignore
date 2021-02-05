@@ -1,0 +1,16 @@
+# personal file that probably shouldn't be committed
+/src/resources/repository/
+
+# IntelliJ-specific
+budge.iml
+.idea
+
+# Netbeans-specific
+build.xml
+nbproject
+lib/CopyLibs
+lib/nblibraries.properties
+/build/
+
+# build files
+out

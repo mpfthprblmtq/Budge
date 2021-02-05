@@ -8,6 +8,7 @@ import budge.utils.Constants;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class RulesRepository {
@@ -68,6 +69,10 @@ public class RulesRepository {
      * @throws IOException
      */
     private void writeOutRules() throws IOException {
+
+        // sort by description first
+        rules.sort(Comparator.comparing(Rule::getToReplace));
+
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(file));
             for (Rule rule : this.rules) {
@@ -94,11 +99,16 @@ public class RulesRepository {
             }
         }
 
+        // add it to the rules global then sort it
+        rules.add(rule);
+        rules.sort(Comparator.comparing(Rule::getToReplace));
+
         // add it to the file
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, true))) {
-            writer.append(rule.toString());
-            writer.append(Constants.NEWLINE);
-            rules.add(rule);
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            for (Rule ruleInList : getRules()) {
+                writer.append(ruleInList.toString());
+                writer.append(Constants.NEWLINE);
+            }
         } catch (IOException e) {
             throw new IOException("IOException while trying to read " + file.getName() + "!  " + e.getMessage());
         }

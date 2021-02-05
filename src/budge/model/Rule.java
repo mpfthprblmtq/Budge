@@ -1,5 +1,7 @@
 package budge.model;
 
+import budge.utils.Utils;
+
 import java.util.Objects;
 
 import static budge.utils.Constants.COMMA;
@@ -89,7 +91,7 @@ public class Rule {
                 .append(category);
         if (isConditional()) {
             stringBuilder.append(COMMA)
-                    .append(String.format("%.2f", conditionalAmount)).append(COMMA)
+                    .append(Utils.formatDouble(conditionalAmount)).append(COMMA)
                     .append(category2);
         }
         return stringBuilder.toString();

@@ -7,6 +7,7 @@ import budge.service.RulesService;
 import budge.utils.Constants;
 import budge.utils.FormUtils;
 import budge.utils.StringUtils;
+import budge.utils.Utils;
 
 import javax.swing.table.DefaultTableModel;
 import java.awt.event.KeyEvent;
@@ -74,7 +75,7 @@ public class RulesTableFrame extends javax.swing.JFrame {
                     rule.getToReplace(),
                     rule.getReplaceWith(),
                     rule.getCategory().getCategory(),
-                    rule.getConditionalAmount() == null ? EMPTY : "$" + String.format("%.2f", rule.getConditionalAmount()),
+                    rule.getConditionalAmount() == null ? EMPTY : "$" + Utils.formatDouble(rule.getConditionalAmount()),
                     rule.getCategory2() == null ? null : rule.getCategory2().getCategory()
             });
         }));
@@ -106,7 +107,7 @@ public class RulesTableFrame extends javax.swing.JFrame {
             categoryIICombobox.setSelectedItem(rule.getCategory2().getCategory());
             categoryIICombobox.setEnabled(true);
             categoryIILabel.setEnabled(true);
-            conditionalAmountTextField.setText(String.format("%.2f", rule.getConditionalAmount()));
+            conditionalAmountTextField.setText(Utils.formatDouble(rule.getConditionalAmount()));
             conditionalAmountTextField.setEnabled(true);
             conditionalAmountLabel.setEnabled(true);
         } else {

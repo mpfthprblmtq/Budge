@@ -7,7 +7,6 @@ import budge.model.exceptions.rules.DuplicateRuleException;
 import budge.model.exceptions.rules.RuleNotFoundException;
 import budge.model.exceptions.rules.RuleNotRemovedException;
 import budge.repository.RulesRepository;
-import budge.utils.Constants;
 import budge.utils.StringUtils;
 
 import java.io.IOException;
@@ -53,10 +52,10 @@ public class RulesService {
      * @param rule the rule to add
      * @return either null for success or an error message
      */
-    public String addRule(Rule rule) {
+    public String createRule(Rule rule) {
         cleanRule(rule);
         try {
-            rulesRepository.addRule(rule);
+            rulesRepository.createRule(rule);
             return null;
         } catch (DuplicateRuleException | IOException e) {
             return e.getMessage();
@@ -69,9 +68,9 @@ public class RulesService {
      * @param newRule the rule with the new values
      * @return either null for success or an error message
      */
-    public String editRule(Rule initialRule, Rule newRule) {
+    public String updateRule(Rule initialRule, Rule newRule) {
         try {
-            rulesRepository.editRule(initialRule, newRule);
+            rulesRepository.updateRule(initialRule, newRule);
             return null;
         } catch (RuleNotFoundException | IOException e) {
             return e.getMessage();
@@ -83,9 +82,9 @@ public class RulesService {
      * @param rule the rule to remove
      * @return either null for success or an error message
      */
-    public String removeRule(Rule rule) {
+    public String deleteRule(Rule rule) {
         try {
-            rulesRepository.removeRule(rule);
+            rulesRepository.deleteRule(rule);
             return null;
         } catch (RuleNotFoundException | RuleNotRemovedException | IOException e) {
             return e.getMessage();
@@ -143,38 +142,30 @@ public class RulesService {
      * Parses a rule on an entry by checking to see if a rule exists for the given entry's description
      * @param entry the entry to run the rule on
      */
-    public void parseRule(ParsedEntry entry) {
+    public void applyRule(ParsedEntry entry) {
         for (Rule rule : rulesRepository.getRules()) {
             if (entry.getDescription().toUpperCase().contains(rule.getToReplace())) {
 
                 // category
                 if (rule.getConditionalAmount() != null) {
                     double amount = Double.parseDouble(entry.getParsedAmount());
-                    if (amount < rule.getConditionalAmount()) {
+                    if (Math.abs(amount) > rule.getConditionalAmount()) {
                         entry.setCategory(rule.getCategory());
                     } else {
                         entry.setCategory(rule.getCategory2());
                     }
+                    entry.setParsedDescription(rule.getReplaceWith());
                 } else {
                     entry.setCategory(rule.getCategory());
+
+                    // change the description to whatever the rule says
+                    // unless it's transfer, then don't change it, we'll deal with that in another method
+                    if (rule.getCategory() != Category.TRANSFER) {
+                        entry.setParsedDescription(rule.getReplaceWith());
+                    }
                 }
-
-                // description
-                entry.setParsedDescription(rule.getReplaceWith());
+                entry.setParsed(true);
             }
         }
-    }
-
-    public ParsedEntry parseTransfer(ParsedEntry entry) {
-        // appliances/From RIPLEY PATRICK XXXXXXXXXX  Share
-        String description = StringUtils.EMPTY;
-        String[] arr = entry.getParsedDescription().split("/");
-        if (arr.length == 2) {
-            if (arr[0].equals("- -SCU Mobile")) {
-                description = description.concat("Mobile Transfer");
-            }
-        }
-
-        return entry;
     }
 }

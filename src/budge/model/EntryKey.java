@@ -79,7 +79,7 @@ public class EntryKey {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         EntryKey entryKey = (EntryKey) o;
-        return id.equals(entryKey.id) &&
+        return (id == null || id.equals(entryKey.id)) &&
                 amount.equals(entryKey.amount) &&
                 account.equals(entryKey.account) &&
                 date.equals(entryKey.date);

@@ -6,27 +6,20 @@
 package budge.views;
 
 import budge.Main;
-import budge.model.Category;
 import budge.model.Entry;
 import budge.model.EntryKey;
 import budge.model.ParsedEntry;
 import budge.service.EntryService;
-import budge.utils.Constants;
 import budge.utils.FormUtils;
 import budge.utils.StringUtils;
 import budge.utils.Utils;
 import budge.views.modals.EditModal;
 
-import java.awt.Dimension;
-
+import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JLabel;
-import javax.swing.table.TableColumn;
 
 /**
  *
@@ -37,23 +30,43 @@ public class EntryTableFrame extends javax.swing.JFrame {
     EntryService entryService = Main.getEntryService();
 
     // table model used, with some customizations and overrides
-    DefaultTableModel model;
+    DefaultTableModel model = new DefaultTableModel() {
+        @Override   // returns a certain type of class based on the column index
+        public Class getColumnClass(int column) {
+            if (column == 0) {
+                return ImageIcon.class;
+            } else {
+                return Object.class;
+            }
+        }
+
+        @Override
+        public boolean isCellEditable(int row, int column){
+            return false;
+        }
+    };
 
     /**
      * Creates new form TableFrame
      */
     public EntryTableFrame() {
-        initComponents();
+        // init the components
+        // checks if we're in the EDT to prevent NoSuchElementExceptions and ArrayIndexOutOfBoundsExceptions
+        if (SwingUtilities.isEventDispatchThread()) {
+            initComponents();
+            init();
+        } else {
+            SwingUtilities.invokeLater(() -> {
+                initComponents();
+                init();
+            });
+        }
     }
 
     public void init() {
-        model = new DefaultTableModel() {
-            public boolean isCellEditable(int row, int column){
-                return false;
-            }
-        };
         table.setModel(model);
-        
+
+        model.addColumn(StringUtils.EMPTY);
         model.addColumn("Account");
         model.addColumn("Date");
         model.addColumn("Type");
@@ -62,27 +75,33 @@ public class EntryTableFrame extends javax.swing.JFrame {
         model.addColumn("Category");
         model.addColumn("Index");
 
-        FormUtils.setColumnWidth(0, 120, table);
-        FormUtils.setColumnWidth(1, 100, table);
-        FormUtils.setColumnWidth(2, 170, table);
+        FormUtils.setColumnWidth(0, 12, table);
+        FormUtils.setColumnWidth(1, 120, table);
+        FormUtils.setColumnWidth(2, 100, table);
+        FormUtils.setColumnWidth(3, 170, table);
         // leave 3 to stretch
-        FormUtils.setColumnWidth(4,75, table);
-        FormUtils.setColumnWidth(5, 200, table);
+        FormUtils.setColumnWidth(5,100, table);
+        FormUtils.setColumnWidth(6, 175, table);
 
-        table.removeColumn(table.getColumnModel().getColumn(6));
+        table.removeColumn(table.getColumnModel().getColumn(7));
 
         table.setAutoCreateRowSorter(true);
 
-        addAllEntriesToTable(entryService.getAllParsedEntries());
+        addAllEntriesToTable(entryService.getEntries());
     }
 
     private void addAllEntriesToTable(List<ParsedEntry> entries) {
 
+        // counter for non-parsed files
+        int nonParsedEntries = 0;
+
         // sort by date first
         entries.sort(Comparator.comparing(Entry::getDate));
 
-        entries.forEach((entry) -> {
+        for (int i = 0; i < entries.size(); i++) {
+            ParsedEntry entry = entries.get(i);
             model.addRow(new Object[] {
+                    null,
                     entry.getAccount(),
                     entry.getTransactionDate() == null ?
                             Utils.formatDate(entry.getDate()) : Utils.formatDate(entry.getTransactionDate()),
@@ -92,31 +111,67 @@ public class EntryTableFrame extends javax.swing.JFrame {
                     entry.getCategory() != null ? entry.getCategory().getCategory() : StringUtils.EMPTY,
                     entry.getKey()
             });
-        });
-    }
-    
-    private DefaultComboBoxModel<String> initCategoryComboBox() {
-        DefaultComboBoxModel<String> comboBoxModel = new DefaultComboBoxModel<>();
-        comboBoxModel.addElement(StringUtils.EMPTY);
-        for (Category category : Category.values()) {
-            comboBoxModel.addElement(category.getCategory());
+            table.setValueAt(entry.isParsed() ? new ImageIcon(this.getClass().getResource("/resources/img/check-sm.png")) :
+                    new ImageIcon(this.getClass().getResource("/resources/img/default-sm.png")), i, 0);
+            if (!entry.isParsed()) {
+                nonParsedEntries++;
+            }
         }
-        return comboBoxModel;
+        
+        statusLabel.setText(entries.size() + " entries loaded! (" +
+            (entries.size() - nonParsedEntries) + " entries parsed, " + nonParsedEntries + " non-parsed)");
     }
 
     private void editRows(int[] selectedRows) {
         List<ParsedEntry> entries = new ArrayList<>();
         for (int row : selectedRows) {
-            EntryKey key = (EntryKey) model.getValueAt(row, 6);
+            EntryKey key = (EntryKey) model.getValueAt(row, 7);
             ParsedEntry entry = entryService.getEntryByKey(key);
             if (entry != null) {
                 entries.add(entry);
             }
         }
-        System.out.println(entries.size());
         EditModal editModal = new EditModal(entries);
         editModal.setLocation(this.getX() + this.getWidth() + 10, this.getY());
         editModal.setVisible(true);
+    }
+
+    private void filter(
+            String account, String dateFrom, String dateTo, String description, String parsedString, String category) {
+        Boolean parsed;
+        if (account.equals("All")) {
+            account = StringUtils.EMPTY;
+        }
+        if (StringUtils.isEmpty(dateFrom)) {
+            dateFrom = "01/01/1970";
+        }
+        if (StringUtils.isEmpty(dateTo)) {
+            dateTo = "01/01/2070";
+        }
+        if (parsedString.equals("Any")) {
+            parsed = null;
+        } else {
+            parsed = parsedString.equals("Parsed");
+        }
+        List<ParsedEntry> filteredEntries = entryService.filter(account, dateFrom, dateTo, description, parsed, category);
+        filteredEntries.sort(Comparator.comparing(Entry::getDate));
+        model.setRowCount(0);
+        addAllEntriesToTable(filteredEntries);
+    }
+
+    private void clearFilter() {
+        clear();
+        model.setRowCount(0);
+        addAllEntriesToTable(entryService.getEntries());
+    }
+
+    private void clear() {
+        accountComboBox.setSelectedItem("All");
+        dateToField.setText(StringUtils.EMPTY);
+        dateFromField.setText(StringUtils.EMPTY);;
+        descriptionTextField.setText(StringUtils.EMPTY);
+        parsedComboBox.setSelectedItem("Any");
+        categoryComboBox.setSelectedItem(StringUtils.EMPTY);
     }
 
     /**
@@ -136,7 +191,7 @@ public class EntryTableFrame extends javax.swing.JFrame {
         toLbl = new javax.swing.JLabel();
         descriptionLbl = new javax.swing.JLabel();
         categoryLbl = new javax.swing.JLabel();
-        accountComboBlx = new javax.swing.JComboBox<>();
+        accountComboBox = new javax.swing.JComboBox<>();
         dateFromField = new javax.swing.JTextField();
         dateToField = new javax.swing.JTextField();
         descriptionTextField = new javax.swing.JTextField();
@@ -145,6 +200,11 @@ public class EntryTableFrame extends javax.swing.JFrame {
         jSeparator1 = new javax.swing.JSeparator();
         jSeparator2 = new javax.swing.JSeparator();
         jSeparator3 = new javax.swing.JSeparator();
+        jSeparator4 = new javax.swing.JSeparator();
+        statusLbl = new javax.swing.JLabel();
+        statusLabel = new javax.swing.JLabel();
+        clearFilterButton = new javax.swing.JButton();
+        parsedComboBox = new javax.swing.JComboBox<>();
         menuBar = new javax.swing.JMenuBar();
         fileMenu = new javax.swing.JMenu();
         exitMenuItem = new javax.swing.JMenuItem();
@@ -170,9 +230,9 @@ public class EntryTableFrame extends javax.swing.JFrame {
 
         categoryLbl.setText("Category:");
 
-        accountComboBlx.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "All", "Pat", "Aimee", "Joint" }));
+        accountComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "All", "Pat's Checking", "Pat's Savings", "Aimee's Checking", "Aimee's Savings", "Joint Checking", "Joint Savings" }));
 
-        categoryComboBox.setModel(initCategoryComboBox());
+        categoryComboBox.setModel(FormUtils.initCategoryComboBox());
 
         filterButton.setText("Filter");
         filterButton.addActionListener(new java.awt.event.ActionListener() {
@@ -186,6 +246,19 @@ public class EntryTableFrame extends javax.swing.JFrame {
         jSeparator2.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
         jSeparator3.setOrientation(javax.swing.SwingConstants.VERTICAL);
+
+        jSeparator4.setOrientation(javax.swing.SwingConstants.VERTICAL);
+
+        statusLbl.setText("Status:");
+
+        clearFilterButton.setText("Clear Filter");
+        clearFilterButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clearFilterButtonActionPerformed(evt);
+            }
+        });
+
+        parsedComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Any", "Parsed", "Not Parsed" }));
 
         fileMenu.setText("File");
 
@@ -223,72 +296,96 @@ public class EntryTableFrame extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(tableScrollPane)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(filterLbl)
-                            .addComponent(accountComboBlx, 0, 140, Short.MAX_VALUE)
-                            .addComponent(accountLbl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(dateFromField, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(toLbl)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(dateToField, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(dateLbl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(descriptionTextField)
-                            .addComponent(descriptionLbl, javax.swing.GroupLayout.DEFAULT_SIZE, 235, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(categoryComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(categoryLbl, javax.swing.GroupLayout.DEFAULT_SIZE, 150, Short.MAX_VALUE)))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(filterButton)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(filterLbl)
+                                    .addComponent(accountComboBox, 0, 140, Short.MAX_VALUE)
+                                    .addComponent(accountLbl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(dateFromField, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(toLbl)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(dateToField, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(dateLbl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(descriptionLbl, javax.swing.GroupLayout.DEFAULT_SIZE, 184, Short.MAX_VALUE)
+                                    .addComponent(descriptionTextField)))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(6, 6, 6)
+                                .addComponent(statusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jSeparator4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addComponent(statusLbl, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(parsedComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 121, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(categoryComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(categoryLbl, javax.swing.GroupLayout.DEFAULT_SIZE, 150, Short.MAX_VALUE)))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(clearFilterButton, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(filterButton, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(filterLbl)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(jSeparator3, javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(parsedComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(filterLbl)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                .addComponent(jSeparator3, javax.swing.GroupLayout.Alignment.TRAILING)
                                 .addGroup(layout.createSequentialGroup()
                                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(accountLbl)
-                                        .addComponent(dateLbl)
-                                        .addComponent(descriptionLbl))
-                                    .addGap(0, 0, Short.MAX_VALUE))
-                                .addComponent(categoryLbl, javax.swing.GroupLayout.Alignment.TRAILING))
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(accountComboBlx, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(dateToField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(toLbl)
-                                    .addComponent(dateFromField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(descriptionTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(categoryComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addComponent(jSeparator2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                            .addGroup(layout.createSequentialGroup()
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                    .addComponent(accountLbl)
+                                                    .addComponent(dateLbl)
+                                                    .addComponent(descriptionLbl))
+                                                .addGap(0, 0, Short.MAX_VALUE))
+                                            .addComponent(categoryLbl, javax.swing.GroupLayout.Alignment.TRAILING))
+                                        .addComponent(statusLbl))
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                            .addComponent(accountComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(dateToField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(toLbl)
+                                            .addComponent(dateFromField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                            .addComponent(descriptionTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(categoryComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                .addComponent(jSeparator2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jSeparator4, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(filterButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(filterButton)
+                        .addComponent(clearFilterButton))
+                    .addComponent(statusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tableScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 500, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
@@ -301,52 +398,37 @@ public class EntryTableFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_editRowsMenuItemActionPerformed
 
     private void filterButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filterButtonActionPerformed
-        
+        filter(
+                accountComboBox.getSelectedItem() != null ? accountComboBox.getSelectedItem().toString() : null,
+                dateFromField.getText(),
+                dateToField.getText(),
+                descriptionTextField.getText(),
+                parsedComboBox.getSelectedItem() != null ? parsedComboBox.getSelectedItem().toString() : null,
+                categoryComboBox.getSelectedItem() != null ? categoryComboBox.getSelectedItem().toString() : null
+                );
     }//GEN-LAST:event_filterButtonActionPerformed
 
     private void exitMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exitMenuItemActionPerformed
-        
+        this.dispose();
     }//GEN-LAST:event_exitMenuItemActionPerformed
+
+    private void clearFilterButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearFilterButtonActionPerformed
+        clearFilter();
+    }//GEN-LAST:event_clearFilterButtonActionPerformed
 
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(EntryTableFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(EntryTableFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(EntryTableFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(EntryTableFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-        //</editor-fold>
+    public static void main(String[] args) {
 
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> {
-            
-        });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox<String> accountComboBlx;
+    private javax.swing.JComboBox<String> accountComboBox;
     private javax.swing.JLabel accountLbl;
     private javax.swing.JComboBox<String> categoryComboBox;
     private javax.swing.JLabel categoryLbl;
+    private javax.swing.JButton clearFilterButton;
     private javax.swing.JTextField dateFromField;
     private javax.swing.JLabel dateLbl;
     private javax.swing.JTextField dateToField;
@@ -361,7 +443,11 @@ public class EntryTableFrame extends javax.swing.JFrame {
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
+    private javax.swing.JSeparator jSeparator4;
     private javax.swing.JMenuBar menuBar;
+    private javax.swing.JComboBox<String> parsedComboBox;
+    private javax.swing.JLabel statusLabel;
+    private javax.swing.JLabel statusLbl;
     private javax.swing.JTable table;
     private javax.swing.JScrollPane tableScrollPane;
     private javax.swing.JLabel toLbl;

@@ -1,39 +1,47 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package budge.views;
 
 import budge.Main;
 import budge.service.StatementParsingService;
+import budge.service.DialogService;
+import budge.utils.Constants;
 import budge.utils.FileDrop;
+import budge.utils.StringUtils;
 import budge.utils.Utils;
+
+import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import javax.swing.ImageIcon;
-import javax.swing.JOptionPane;
 
-/**
- *
- * @author pat
- */
 public class Frame extends javax.swing.JFrame {
 
-    StatementParsingService statementParsingService;
-
+    // globals
+    StatementParsingService statementParsingService = Main.getStatementParsingService();
     List<File> filesToProcess = new ArrayList<>();
+    DialogService dialogService = Main.getDialogService();
     
     /**
      * Creates new form Frame
      */
     public Frame() {
-        initComponents();
-        
-        statementParsingService = Main.getStatementParsingService();
-        
-        // <editor-fold defaultstate="collapsed" desc="Filedrop configuration">    
+        // init the components
+        // checks if we're in the EDT to prevent NoSuchElementExceptions and ArrayIndexOutOfBoundsExceptions
+        if (SwingUtilities.isEventDispatchThread()) {
+            initComponents();
+            initFileDrop();
+        } else {
+            SwingUtilities.invokeLater(() -> {
+                initComponents();
+                initFileDrop();
+            });
+        }
+    }
+
+    /**
+     * Inits the file drop functionality
+     */
+    private void initFileDrop() {
         // taken from the FileDrop example
         new FileDrop(System.out, filesTextArea, (File[] files) -> {
             // create an arraylist of files and traverse it
@@ -45,7 +53,7 @@ public class Frame extends javax.swing.JFrame {
                     fileList.add(file);
                 }
             }
-            
+
             String names = "";
             for(File file : fileList) {
                 names = names.concat(file.getName()).concat("\n");
@@ -64,20 +72,19 @@ public class Frame extends javax.swing.JFrame {
             filesTextArea.setText(names);
             processButton.setEnabled(true);
         });
-        // </editor-fold>
     }
     
     public void process() {
-        statementParsingService.process(filesToProcess);
+        String result = statementParsingService.process(filesToProcess);
+        if (StringUtils.isNotEmpty(result)) {
+            updateConsole(result);
+        } else {
+            updateConsole(filesToProcess.size() + " files processed!");
+        }
     }
     
     public void download() {
-        JOptionPane.showMessageDialog(
-                this, 
-                "Not implemented yet!", 
-                "Error", 
-                JOptionPane.ERROR_MESSAGE, 
-                new ImageIcon(this.getClass().getResource("/resources/img/b.png")));
+        dialogService.showErrorDialog("Error", "Not implemented yet!", this);
     }
     
     public void clear() {
@@ -89,8 +96,12 @@ public class Frame extends javax.swing.JFrame {
         Main.openTableView();
     }
     
-    public void updateText(String line) {
-        log.setText(log.getText() + "\n" + line);
+    public void updateConsole(String line) {
+        if (log.getText().equals(StringUtils.EMPTY)) {
+            log.setText(line + Constants.NEWLINE);
+        } else {
+            log.setText(log.getText() + "\n" + line);
+        }
     }
 
     /**
@@ -115,12 +126,15 @@ public class Frame extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         clearButton = new javax.swing.JButton();
         jButton1 = new javax.swing.JButton();
+        jButton2 = new javax.swing.JButton();
+        jButton3 = new javax.swing.JButton();
         jMenuBar1 = new javax.swing.JMenuBar();
         fileMenu = new javax.swing.JMenu();
         rulesMenu = new javax.swing.JMenu();
         openRulesEditorItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Budge");
 
         headerLabelImage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/img/b.png"))); // NOI18N
 
@@ -177,6 +191,20 @@ public class Frame extends javax.swing.JFrame {
             }
         });
 
+        jButton2.setText("Clr Ent");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
+
+        jButton3.setText("Imp PC");
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
+
         fileMenu.setText("File");
         jMenuBar1.add(fileMenu);
 
@@ -216,7 +244,9 @@ public class Frame extends javax.swing.JFrame {
                             .addComponent(clearButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                                 .addGap(0, 0, Short.MAX_VALUE)
-                                .addComponent(jButton1))))
+                                .addComponent(jButton1))
+                            .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jButton3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 248, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE))
@@ -232,9 +262,14 @@ public class Frame extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(headerLabelImage, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(headerLabelText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(headerLabelImage, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(headerLabelText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jButton2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton3)))
                 .addGap(19, 19, 19)
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -281,6 +316,20 @@ public class Frame extends javax.swing.JFrame {
         Main.openRulesEditor();
     }//GEN-LAST:event_openRulesEditorItemActionPerformed
 
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        Main.getEntryService().clearAllEntries();
+    }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        String result = Main.getStatementParsingService()
+                .process(Collections.singletonList(new File("2019/Pat Checking.csv")));
+        if (StringUtils.isEmpty(result)) {
+            updateConsole("File successfully processed!");
+        } else {
+            updateConsole(result);
+        }
+    }//GEN-LAST:event_jButton3ActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -295,6 +344,8 @@ public class Frame extends javax.swing.JFrame {
     private javax.swing.JLabel headerLabelImage;
     private javax.swing.JLabel headerLabelText;
     private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton2;
+    private javax.swing.JButton jButton3;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JScrollPane jScrollPane1;

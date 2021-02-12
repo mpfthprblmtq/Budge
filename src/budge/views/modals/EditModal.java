@@ -12,8 +12,9 @@ import budge.utils.FormUtils;
 import budge.utils.StringUtils;
 import budge.utils.Utils;
 
+import javax.swing.*;
+import java.util.Date;
 import java.util.List;
-import javax.swing.DefaultComboBoxModel;
 
 /**
  *
@@ -21,19 +22,35 @@ import javax.swing.DefaultComboBoxModel;
  */
 public class EditModal extends javax.swing.JFrame {
 
+    // globals
+    List<ParsedEntry> initialEntries;
+
     /**
      * Creates new form EditModal
      * @param entries
      */
     public EditModal(List<ParsedEntry> entries) {
-        initComponents();
-        populateFields(entries);
+        // init the components
+        // checks if we're in the EDT to prevent NoSuchElementExceptions and ArrayIndexOutOfBoundsExceptions
+        if (SwingUtilities.isEventDispatchThread()) {
+            initComponents();
+            populateFields(entries);
+        } else {
+            SwingUtilities.invokeLater(() -> {
+                initComponents();
+                populateFields(entries);
+            });
+        }
     }
     
     /**
      * Populates the fields on the form
      */
     private void populateFields(List<ParsedEntry> entries) {
+
+        // set global
+        initialEntries = entries;
+
         if (entries.size() == 1) {
             ParsedEntry entry = entries.get(0);
             accountTextField.setText(entry.getAccount());
@@ -53,6 +70,150 @@ public class EditModal extends javax.swing.JFrame {
                     StringUtils.EMPTY : entry.getMerchantCode().toString());
             statusTextField.setText(entry.getStatus());
             endingBalanceTextField.setText(entry.getEndingBalance().toString());
+        } else {
+
+            boolean allMatch = true;
+            ParsedEntry first = entries.get(0);
+            String account = first.getAccount();
+            for (int i = 1; i < entries.size(); i++) {
+                if (!account.equals(entries.get(i).getAccount())) {
+                    allMatch = false;
+                    break;
+                }
+            }
+            accountTextField.setText(allMatch ? account : Constants.DASH);
+
+            allMatch = true;
+            Date date = first.getTransactionDate();
+            for (int i = 1; i < entries.size(); i++) {
+                if (date != entries.get(i).getTransactionDate()) {
+                    allMatch = false;
+                    break;
+                }
+            }
+            transactionDateTextField.setText(allMatch ? Utils.formatDateSimple(date) : Constants.DASH);
+
+            allMatch = true;
+            Date postDate = first.getDate();
+            for (int i = 1; i < entries.size(); i++) {
+                if (postDate != entries.get(i).getDate()) {
+                    allMatch = false;
+                    break;
+                }
+            }
+            postDateTextField.setText(allMatch ? Utils.formatDateSimple(postDate) : Constants.DASH);
+
+            allMatch = true;
+            budge.model.Type type = first.getType();
+            for (int i = 1; i < entries.size(); i++) {
+                if (type != entries.get(i).getType()) {
+                    allMatch = false;
+                    break;
+                }
+            }
+            typeTextField.setText(allMatch ? type.toString() : Constants.DASH);
+
+            allMatch = true;
+            String amount = first.getParsedAmount();
+            for (int i = 1; i < entries.size(); i++) {
+                if (!amount.equals(entries.get(i).getParsedAmount())) {
+                    allMatch = false;
+                    break;
+                }
+            }
+            amountTextField.setText(allMatch ? amount : Constants.DASH);
+
+            allMatch = true;
+            Category category = first.getCategory();
+            for (int i = 1; i < entries.size(); i++) {
+                if (category != entries.get(i).getCategory()) {
+                    allMatch = false;
+                    break;
+                }
+            }
+            categoryComboBox.setSelectedItem(allMatch ? category.getCategory() : StringUtils.EMPTY);
+
+            allMatch = true;
+            String description = first.getDescription();
+            for (int i = 1; i < entries.size(); i++) {
+                if (description != null &&
+                        !description.equals(entries.get(i).getDescription())) {
+                    allMatch = false;
+                    break;
+                }
+            }
+            descriptionTextArea.setText(allMatch ? description : Constants.DASH);
+
+            allMatch = true;
+            String notes = first.getNotes();
+            for (int i = 1; i < entries.size(); i++) {
+                if (!notes.equals(entries.get(i).getNotes())) {
+                    allMatch = false;
+                    break;
+                }
+            }
+            notesTextArea.setText(allMatch ? notes : Constants.DASH);
+
+            allMatch = true;
+            String check = first.getCheck();
+            for (int i = 1; i < entries.size(); i++) {
+                if (!check.equals(entries.get(i).getCheck())) {
+                    allMatch = false;
+                    break;
+                }
+            }
+            checkTextField.setText(allMatch ? check : Constants.DASH);
+
+            allMatch = true;
+            String id = first.getId();
+            for (int i = 1; i < entries.size(); i++) {
+                if (!id.equals(entries.get(i).getId())) {
+                    allMatch = false;
+                    break;
+                }
+            }
+            idTextField.setText(allMatch ? id : Constants.DASH);
+
+            allMatch = true;
+            Integer debitCard = first.getCard();
+            for (int i = 1; i < entries.size(); i++) {
+                if (debitCard != null &&
+                        !debitCard.equals(entries.get(i).getCard())) {
+                    allMatch = false;
+                    break;
+                }
+            }
+            debitCardTextField.setText(allMatch ? String.valueOf(debitCard) : Constants.DASH);
+
+            allMatch = true;
+            Integer merchantCode = first.getMerchantCode();
+            for (int i = 1; i < entries.size(); i++) {
+                if (!merchantCode.equals(entries.get(i).getMerchantCode())) {
+                    allMatch = false;
+                    break;
+                }
+            }
+            merchantCodeTextField.setText(allMatch ? merchantCode.toString() : Constants.DASH);
+
+            allMatch = true;
+            String status = first.getStatus();
+            for (int i = 1; i < entries.size(); i++) {
+                if (!status.equals(entries.get(i).getStatus())) {
+                    allMatch = false;
+                    break;
+                }
+            }
+            statusTextField.setText(allMatch ? status : Constants.DASH);
+
+            allMatch = true;
+            Double endingBalance = first.getEndingBalance();
+            for (int i = 1; i < entries.size(); i++) {
+                if (!endingBalance.equals(entries.get(i).getEndingBalance())) {
+                    allMatch = false;
+                    break;
+                }
+            }
+            endingBalanceTextField.setText(allMatch ? endingBalance.toString() : Constants.DASH);
         }
     }
 
@@ -353,35 +514,7 @@ public class EditModal extends javax.swing.JFrame {
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(EditModal.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(EditModal.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(EditModal.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(EditModal.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> {
-            
-        });
-    }
+    public static void main(String[] args) {}
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel accountLbl;

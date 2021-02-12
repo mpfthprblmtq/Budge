@@ -10,6 +10,7 @@ public class ParsedEntry extends Entry {
     private String parsedDescription;
     private String parsedAmount;
     private String notes;
+    private boolean parsed;
 
     public ParsedEntry() {}
 
@@ -19,21 +20,22 @@ public class ParsedEntry extends Entry {
     }
     
     public ParsedEntry(String[] data) {
-        this.setAccount(data[0]);
-        this.setDate(Utils.formatDate(data[1]));
-        this.setCheck(data[2]);
-        this.setType(Type.fromString(data[3]));
-        this.setMethod(Method.fromString(data[4]));
-        this.setParsedDescription(data[5]);
-        this.setTransactionDate(Utils.formatDate(data[6]));
-        this.setId(data[7]);
-        this.setCard(Utils.isEmpty(data[8]) ? null : Integer.valueOf(data[8]));
-        this.setMerchantCode(Utils.isEmpty(data[9]) ? null : Integer.valueOf(data[9]));
-        this.setParsedAmount(data[10]);
-        this.setStatus(data[11]);
-        this.setEndingBalance(Double.valueOf(data[12]));
-        this.setCategory(Category.fromString(data[13]));
-        this.setNotes(data[14]);
+        this.setParsed(data[0].equals(Constants.TRUE));
+        this.setAccount(data[1]);
+        this.setDate(Utils.formatDate(data[2]));
+        this.setCheck(data[3]);
+        this.setType(Type.fromString(data[4]));
+        this.setMethod(Method.fromString(data[5]));
+        this.setParsedDescription(data[6]);
+        this.setTransactionDate(Utils.formatDate(data[7]));
+        this.setId(data[8]);
+        this.setCard(Utils.isEmpty(data[9]) ? null : Integer.valueOf(data[9]));
+        this.setMerchantCode(Utils.isEmpty(data[10]) ? null : Integer.valueOf(data[10]));
+        this.setParsedAmount(data[11]);
+        this.setStatus(data[12]);
+        this.setEndingBalance(Double.valueOf(data[13]));
+        this.setCategory(Category.fromString(data[14]));
+        this.setNotes(data[15]);
     }
 
     public Category getCategory() {
@@ -82,6 +84,8 @@ public class ParsedEntry extends Entry {
     public String toString() {
         String toString = StringUtils.EMPTY;
         return toString
+                .concat(this.isParsed() ? Constants.TRUE : Constants.FALSE)
+                .concat(Constants.COMMA)
                 .concat(super.getAccount())
                 .concat(Constants.COMMA)
                 .concat(Utils.formatDateSimple(super.getDate()))
@@ -111,5 +115,13 @@ public class ParsedEntry extends Entry {
                 .concat(category == null ? StringUtils.EMPTY : category.getCategory())
                 .concat(Constants.COMMA)
                 .concat(Utils.isEmpty(notes) ? StringUtils.EMPTY : notes);
+    }
+
+    public boolean isParsed() {
+        return parsed;
+    }
+
+    public void setParsed(boolean parsed) {
+        this.parsed = parsed;
     }
 }

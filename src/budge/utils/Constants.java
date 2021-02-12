@@ -6,7 +6,11 @@ public class Constants {
 
     public static final String SPACE = " ";
     public static final String COMMA = ",";
+    public static final String DASH = "-";
     public static final String NEWLINE = "\n";
+
+    public static final String TRUE = "TRUE";
+    public static final String FALSE = "FALSE";
 
     public static int ACCOUNT_COL = 0;
     public static int DATE_COL = 1;

@@ -122,8 +122,9 @@ public class Entry {
         Pattern p = Pattern.compile(".*(Card \\d{4}).*");
         Matcher m = p.matcher(description);
         if (m.matches()) {
-            System.out.println(m.group(1));
-            description = description.replace(m.group(1), StringUtils.EMPTY);
+            String card = m.group(1);
+            description = description.replace(card, StringUtils.EMPTY);
+            this.card = Integer.valueOf(card.replace(Constants.CARD, StringUtils.EMPTY));
         }
 
         // id thing ?

@@ -43,11 +43,7 @@ public class RulesRepository {
         try {
             reader = new BufferedReader(new FileReader(file));
             while ((line = reader.readLine()) != null) {
-                if (line.startsWith("###") || line.trim().isEmpty()) {
-
-                } else {
-                    rules.add(new Rule(line));
-                }
+                rules.add(new Rule(line));
             }
         } catch (FileNotFoundException e) {
             System.err.println(file.getName() + " wasn't found!");
@@ -91,7 +87,7 @@ public class RulesRepository {
      * @throws DuplicateRuleException
      * @throws IOException
      */
-    public void addRule(Rule rule) throws DuplicateRuleException, IOException {
+    public void createRule(Rule rule) throws DuplicateRuleException, IOException {
         // check if it already exists
         for (Rule ruleInList : this.rules) {
             if (rule.equals(ruleInList)) {
@@ -121,7 +117,7 @@ public class RulesRepository {
      * @throws RuleNotFoundException
      * @throws IOException
      */
-    public void editRule(Rule initialRule, Rule newRule) throws RuleNotFoundException, IOException {
+    public void updateRule(Rule initialRule, Rule newRule) throws RuleNotFoundException, IOException {
         String toReplace = initialRule.toString();
         String replaceWith = newRule.toString();
         try {
@@ -169,7 +165,7 @@ public class RulesRepository {
      * @throws RuleNotFoundException
      * @throws IOException
      */
-    public void removeRule(Rule rule) throws RuleNotRemovedException, RuleNotFoundException, IOException {
+    public void deleteRule(Rule rule) throws RuleNotRemovedException, RuleNotFoundException, IOException {
         // remove the rule
         if (!rules.remove(rule)) {
             throw new RuleNotFoundException("Rule with description " + rule.getToReplace() + " was not found!");

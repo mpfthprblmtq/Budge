@@ -10,6 +10,7 @@ import budge.utils.StringUtils;
 import budge.utils.Utils;
 
 import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Comparator;
 import java.util.List;
@@ -33,6 +34,7 @@ public class RulesTableFrame extends javax.swing.JFrame {
      */
     public RulesTableFrame() {
         initComponents();
+        init();
     }
 
     /**
@@ -141,7 +143,7 @@ public class RulesTableFrame extends javax.swing.JFrame {
         // check validation results
         if (!error) {
             // do the add
-            String result = rulesService.addRule(new Rule(
+            String result = rulesService.createRule(new Rule(
                     description,
                     parsedDescription,
                     Category.fromString(category),
@@ -165,6 +167,7 @@ public class RulesTableFrame extends javax.swing.JFrame {
                     }
                 }
                 rulesTable.setRowSelectionInterval(selectedRow, selectedRow);
+                rulesTable.scrollRectToVisible(new Rectangle(rulesTable.getCellRect(selectedRow, 0, true)));
             }
         }
     }
@@ -191,7 +194,7 @@ public class RulesTableFrame extends javax.swing.JFrame {
                 Category.fromString(category2));
 
         // do the edit
-        String result = rulesService.editRule(selectedRule, newRule);
+        String result = rulesService.updateRule(selectedRule, newRule);
 
         // then update graphics based on the result
         if (StringUtils.isNotEmpty(result)) {
@@ -232,7 +235,7 @@ public class RulesTableFrame extends javax.swing.JFrame {
      */
     private void remove() {
         // do the remove
-        String result = rulesService.removeRule(selectedRule);
+        String result = rulesService.deleteRule(selectedRule);
 
         // then update graphics based on the result
         if (StringUtils.isNotEmpty(result)) {
@@ -268,14 +271,6 @@ public class RulesTableFrame extends javax.swing.JFrame {
             error = true;
         } else {
             descriptionErrorLabel.setText(EMPTY);
-        }
-
-        // parsed description (checks if empty)
-        if (StringUtils.isEmpty(parsedDescription)) {
-            parsedDescriptionErrorLabel.setText(Constants.REQUIRED);
-            error = true;
-        } else {
-            parsedDescriptionErrorLabel.setText(EMPTY);
         }
 
         // category (checks if a valid value is selected)

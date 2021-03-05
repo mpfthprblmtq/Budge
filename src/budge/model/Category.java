@@ -18,7 +18,12 @@ public enum Category {
     STUDENT_LOAN ("Student Loan"),
     INTEREST ("Interest"),
     TRANSFER ("Transfer"),
-    SALARY ("Salary");
+    SALARY ("Salary"),
+    DEPOSIT ("Deposit"),
+    CREDIT_CARD_PAYMENT ("Credit Card Payment"),
+    CAR_STUFF ("Car Stuff"),
+    VACATION ("Vacation"),
+    ATM ("ATM");
 
     private String category;
 

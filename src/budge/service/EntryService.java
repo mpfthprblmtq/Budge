@@ -1,7 +1,9 @@
 package budge.service;
 
+import budge.model.Category;
 import budge.model.EntryKey;
 import budge.model.ParsedEntry;
+import budge.model.Type;
 import budge.model.exceptions.entry.EntryNotFoundException;
 import budge.repository.EntryRepository;
 import budge.utils.StringUtils;
@@ -101,11 +103,17 @@ public class EntryService {
      * @param category
      * @return the list of filtered entries
      */
-    public List<ParsedEntry> filter(String account, String dateFrom, String dateTo, String description, Boolean parsed, String category) {
+    public List<ParsedEntry> filter(String account, String dateFrom, String dateTo, String description, String type, Boolean parsed, String category) {
         List<ParsedEntry> filteredEntries = new ArrayList<>();
         for (ParsedEntry entry : getEntries()) {
+
+            // account
             boolean accountMatches = entry.getAccount().contains(account);
+
+            // date
             boolean dateMatches = entry.getDate().before(Utils.formatDate(dateTo)) && entry.getDate().after(Utils.formatDate(dateFrom));
+
+            // description
             String descriptionToCheck;
             if (StringUtils.isEmpty(entry.getParsedDescription())) {
                 descriptionToCheck = entry.getDescription();
@@ -113,19 +121,38 @@ public class EntryService {
                 descriptionToCheck = entry.getParsedDescription();
             }
             boolean descriptionMatches = StringUtils.contains(descriptionToCheck, description);
+
+            // type
+            boolean typeMatches = false;
+            if (type.equals("Deposit")) {
+                if (entry.getType().equals(Type.DEPOSIT) || entry.getType().equals(Type.WITHDRAWAL_ADJUSTMENT)) {
+                    typeMatches = true;
+                }
+            } else if (type.equals("Withdrawal")) {
+                if (entry.getType().equals(Type.WITHDRAWAL) || entry.getType().equals(Type.RECURRING_WITHDRAWAL)) {
+                    typeMatches = true;
+                }
+            } else {
+                typeMatches = true;
+            }
+
+            // parsed
             boolean parsedMatches;
             if (parsed == null) {
                 parsedMatches = true;
             } else {
                 parsedMatches = entry.isParsed() == parsed;
             }
+
+            // category
             boolean categoryMatches;
             if (entry.getCategory() == null) {
                 categoryMatches = StringUtils.isEmpty(category);
             } else {
                 categoryMatches = entry.getCategory().getCategory().contains(category);
             }
-            if (accountMatches && dateMatches && descriptionMatches && parsedMatches && categoryMatches) {
+
+            if (accountMatches && dateMatches && descriptionMatches && typeMatches && parsedMatches && categoryMatches) {
                 filteredEntries.add(entry);
             }
         }

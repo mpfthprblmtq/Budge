@@ -44,13 +44,22 @@ public class Main {
     }
     
     public static void openTableView() {
+        entryTableFrame.resetTable(entryService.getEntries());
         entryTableFrame.setLocation(100, 100);
         entryTableFrame.setVisible(true);
+    }
+
+    public static EntryTableFrame getEntryTableFrame() {
+        return entryTableFrame;
     }
 
     public static void openRulesEditor() {
         rulesTableFrame.setLocation(100, 100);
         rulesTableFrame.setVisible(true);
+    }
+
+    public static RulesTableFrame getRulesTableFrame() {
+        return rulesTableFrame;
     }
     
     // service methods

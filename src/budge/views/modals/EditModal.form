@@ -26,27 +26,33 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                  <Component id="jLabel14" max="32767" attributes="0"/>
+                  <Component id="jLabel13" max="32767" attributes="0"/>
+                  <Component id="jLabel12" max="32767" attributes="0"/>
+                  <Component id="jLabel11" max="32767" attributes="0"/>
+                  <Component id="jLabel10" max="32767" attributes="0"/>
+                  <Component id="amountLbl" max="32767" attributes="0"/>
+                  <Component id="accountLbl" alignment="0" max="32767" attributes="0"/>
+                  <Component id="transactionDateLbl" alignment="0" max="32767" attributes="0"/>
+                  <Component id="postDateLbl" alignment="0" max="32767" attributes="0"/>
+                  <Component id="checkLbl" alignment="0" max="32767" attributes="0"/>
+                  <Component id="typeLbl" alignment="0" max="32767" attributes="0"/>
+                  <Component id="categoryLbl" alignment="0" max="32767" attributes="0"/>
+                  <Component id="descriptionLbl" alignment="0" max="32767" attributes="0"/>
+                  <Component id="jLabel9" max="32767" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" alignment="0" attributes="0">
-                      <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                          <Component id="jLabel14" max="32767" attributes="0"/>
-                          <Component id="jLabel13" max="32767" attributes="0"/>
-                          <Component id="jLabel12" max="32767" attributes="0"/>
-                          <Component id="jLabel11" max="32767" attributes="0"/>
-                          <Component id="jLabel10" max="32767" attributes="0"/>
-                          <Component id="amountLbl" max="32767" attributes="0"/>
-                          <Component id="accountLbl" alignment="0" max="32767" attributes="0"/>
-                          <Component id="transactionDateLbl" alignment="0" max="32767" attributes="0"/>
-                          <Component id="postDateLbl" alignment="0" max="32767" attributes="0"/>
-                          <Component id="checkLbl" alignment="0" max="32767" attributes="0"/>
-                          <Component id="typeLbl" alignment="0" max="32767" attributes="0"/>
-                          <Component id="categoryLbl" alignment="0" max="32767" attributes="0"/>
-                          <Component id="descriptionLbl" alignment="0" max="32767" attributes="0"/>
-                          <Component id="jLabel9" max="32767" attributes="0"/>
-                      </Group>
+                  <Group type="102" alignment="1" attributes="0">
+                      <Component id="parsedCheckBox" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
+                      <Component id="submitButton" min="-2" pref="120" max="-2" attributes="0"/>
+                  </Group>
+                  <Component id="descriptionScrollPane" alignment="0" max="32767" attributes="0"/>
+                  <Component id="notesScrollpane" alignment="0" max="32767" attributes="0"/>
+                  <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="descriptionScrollPane" alignment="0" max="32767" attributes="0"/>
                           <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
                               <Component id="endingBalanceTextField" alignment="0" max="32767" attributes="0"/>
                               <Component id="statusTextField" alignment="0" max="32767" attributes="0"/>
@@ -56,7 +62,6 @@
                               <Component id="checkTextField" alignment="0" max="32767" attributes="0"/>
                           </Group>
                           <Component id="categoryComboBox" alignment="0" min="-2" pref="244" max="-2" attributes="0"/>
-                          <Component id="notesScrollpane" alignment="0" max="32767" attributes="0"/>
                           <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
                               <Component id="accountTextField" alignment="0" max="32767" attributes="0"/>
                               <Component id="transactionDateTextField" alignment="0" max="32767" attributes="0"/>
@@ -65,10 +70,7 @@
                               <Component id="amountTextField" alignment="0" max="32767" attributes="0"/>
                           </Group>
                       </Group>
-                  </Group>
-                  <Group type="102" alignment="1" attributes="0">
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                      <Component id="submitButton" min="-2" pref="120" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -149,7 +151,10 @@
                   <Component id="endingBalanceTextField" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="32767" attributes="0"/>
-              <Component id="submitButton" min="-2" pref="38" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="submitButton" alignment="3" min="-2" pref="38" max="-2" attributes="0"/>
+                  <Component id="parsedCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -393,7 +398,9 @@
             <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
               <Font name="Monospaced" size="13" style="0"/>
             </Property>
+            <Property name="lineWrap" type="boolean" value="true"/>
             <Property name="rows" type="int" value="5"/>
+            <Property name="wrapStyleWord" type="boolean" value="true"/>
           </Properties>
         </Component>
       </SubComponents>
@@ -411,7 +418,9 @@
             <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
               <Font name="Monospaced" size="13" style="0"/>
             </Property>
+            <Property name="lineWrap" type="boolean" value="true"/>
             <Property name="rows" type="int" value="5"/>
+            <Property name="wrapStyleWord" type="boolean" value="true"/>
           </Properties>
         </Component>
       </SubComponents>
@@ -518,10 +527,18 @@
         </Property>
       </Properties>
     </Component>
+    <Component class="javax.swing.JCheckBox" name="parsedCheckBox">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Parsed"/>
+      </Properties>
+    </Component>
     <Component class="javax.swing.JButton" name="submitButton">
       <Properties>
         <Property name="text" type="java.lang.String" value="Submit"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="submitButtonActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>

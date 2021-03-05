@@ -52,7 +52,6 @@ public class EntryRepository {
 
         try {
             reader = new BufferedReader(new FileReader(file));
-            line = reader.readLine();   // skip the first line
             while ((line = reader.readLine()) != null) {
                 String[] data = line.split(",", -1);
                 ParsedEntry entry = new ParsedEntry(data);
@@ -72,6 +71,28 @@ public class EntryRepository {
             } catch (IOException | NullPointerException e) {
                 System.err.println("Couldn't close the reader stream for some reason!");
             }
+        }
+    }
+
+    /**
+     * Writes the entries global to the file
+     * @throws IOException
+     */
+    public void writeOutEntries() throws IOException {
+
+        // sort by date first
+        List<ParsedEntry> parsedEntries = getEntries();
+        parsedEntries.sort(Comparator.comparing(ParsedEntry::getDate));
+
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+            for (ParsedEntry entry : parsedEntries) {
+                writer.write(entry.toString());
+                writer.write(Constants.NEWLINE);
+            }
+            writer.close();
+        } catch (IOException e) {
+            throw new IOException("IOException while trying to write out to entries file!  " + e.getMessage());
         }
     }
 
@@ -117,28 +138,6 @@ public class EntryRepository {
     }
 
     /**
-     * Writes the entries global to the file
-     * @throws IOException
-     */
-    public void writeOutEntries() throws IOException {
-
-        // sort by date first
-        List<ParsedEntry> parsedEntries = getEntries();
-        parsedEntries.sort(Comparator.comparing(ParsedEntry::getDate));
-
-        try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-            for (ParsedEntry entry : parsedEntries) {
-                writer.write(entry.toString());
-                writer.write(Constants.NEWLINE);
-            }
-            writer.close();
-        } catch (IOException e) {
-            throw new IOException("IOException while trying to write out to entries file!  " + e.getMessage());
-        }
-    }
-
-    /**
      * Adds new parsed entries to the entries map, then writes out to the file
      * @param parsedEntries the entries to add
      */
@@ -176,6 +175,8 @@ public class EntryRepository {
             // do the replace(s)
             int entriesNotFound = 0;
             for (ParsedEntry initialEntry : initialEntries) {
+                String toReplace = initialEntry.toString();
+                String replaceWith = entriesToUpdate.get(initialEntry).toString();
                 String fileContents = inputBuffer.toString();
                 String newFileContents = fileContents.replace(initialEntry.toString(), entriesToUpdate.get(initialEntry).toString());
                 if (fileContents.equals(newFileContents)) {
@@ -186,6 +187,13 @@ public class EntryRepository {
             // check to see if there are any entries not updated
             if (entriesNotFound > 0) {
                 throw new EntryNotFoundException(entriesNotFound + " entries not found!");
+            }
+
+            // write out the new file contents to the file
+            try {
+                writeOutEntries();
+            } catch (IOException e) {
+                throw new IOException("IOException while trying to write out to the entries file!  " + e.getMessage());
             }
 
         } catch (IOException e) {

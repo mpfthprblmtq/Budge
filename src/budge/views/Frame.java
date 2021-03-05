@@ -1,6 +1,7 @@
 package budge.views;
 
 import budge.Main;
+import budge.service.EntryService;
 import budge.service.StatementParsingService;
 import budge.service.DialogService;
 import budge.utils.Constants;
@@ -18,8 +19,9 @@ public class Frame extends javax.swing.JFrame {
 
     // globals
     StatementParsingService statementParsingService = Main.getStatementParsingService();
-    List<File> filesToProcess = new ArrayList<>();
     DialogService dialogService = Main.getDialogService();
+    EntryService entryService = Main.getEntryService();
+    List<File> filesToProcess = new ArrayList<>();
     
     /**
      * Creates new form Frame
@@ -30,11 +32,23 @@ public class Frame extends javax.swing.JFrame {
         if (SwingUtilities.isEventDispatchThread()) {
             initComponents();
             initFileDrop();
+            init();
         } else {
             SwingUtilities.invokeLater(() -> {
                 initComponents();
                 initFileDrop();
+                init();
             });
+        }
+    }
+
+    /**
+     * Inits some miscellaneous stuff
+     */
+    private void init() {
+        updateConsole(entryService.getEntries().size() + " entries loaded!");
+        if (entryService.getEntries().size() > 0) {
+            reprocessButton.setEnabled(true);
         }
     }
 
@@ -48,25 +62,23 @@ public class Frame extends javax.swing.JFrame {
             ArrayList<File> fileList = new ArrayList<>();
             for (File file : files) {
                 if (file.isDirectory()) {
-                    fileList = Utils.listFiles(file, fileList);
+                    Utils.listFiles(file, fileList);
                 } else {
                     fileList.add(file);
                 }
             }
 
-            String names = "";
-            for(File file : fileList) {
-                names = names.concat(file.getName()).concat("\n");
+            // add all the files to the list if they are csv files and if they don't already exist in the list
+            for (File file : fileList) {
+                if(!filesToProcess.contains(file) && file.getName().endsWith(".csv")) {
+                    filesToProcess.add(file);
+                }
             }
 
-            if(filesToProcess.isEmpty()) {
-                filesToProcess = fileList;
-            } else {
-                for (File file : fileList) {
-                    if(!filesToProcess.contains(file)) {
-                        filesToProcess.add(file);
-                    }
-                }
+            // create the string to show in the text area
+            String names = StringUtils.EMPTY;
+            for(File file : filesToProcess) {
+                names = names.concat(file.getName()).concat("\n");
             }
 
             filesTextArea.setText(names);
@@ -100,7 +112,7 @@ public class Frame extends javax.swing.JFrame {
         if (log.getText().equals(StringUtils.EMPTY)) {
             log.setText(line + Constants.NEWLINE);
         } else {
-            log.setText(log.getText() + "\n" + line);
+            log.setText(log.getText() + line + Constants.NEWLINE);
         }
     }
 
@@ -125,13 +137,14 @@ public class Frame extends javax.swing.JFrame {
         jSeparator1 = new javax.swing.JSeparator();
         jLabel1 = new javax.swing.JLabel();
         clearButton = new javax.swing.JButton();
-        jButton1 = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
-        jButton3 = new javax.swing.JButton();
+        tableViewButton = new javax.swing.JButton();
+        reprocessButton = new javax.swing.JButton();
         jMenuBar1 = new javax.swing.JMenuBar();
         fileMenu = new javax.swing.JMenu();
         rulesMenu = new javax.swing.JMenu();
         openRulesEditorItem = new javax.swing.JMenuItem();
+        entriesMenu = new javax.swing.JMenu();
+        clearAllEntriesMenuItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Budge");
@@ -184,24 +197,18 @@ public class Frame extends javax.swing.JFrame {
             }
         });
 
-        jButton1.setText("Table View");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        tableViewButton.setText("Table View");
+        tableViewButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                tableViewButtonActionPerformed(evt);
             }
         });
 
-        jButton2.setText("Clr Ent");
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
+        reprocessButton.setText("Re-Process");
+        reprocessButton.setEnabled(false);
+        reprocessButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
-            }
-        });
-
-        jButton3.setText("Imp PC");
-        jButton3.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton3ActionPerformed(evt);
+                reprocessButtonActionPerformed(evt);
             }
         });
 
@@ -221,6 +228,18 @@ public class Frame extends javax.swing.JFrame {
 
         jMenuBar1.add(rulesMenu);
 
+        entriesMenu.setText("Entries");
+
+        clearAllEntriesMenuItem.setText("Clear All Entries");
+        clearAllEntriesMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clearAllEntriesMenuItemActionPerformed(evt);
+            }
+        });
+        entriesMenu.add(clearAllEntriesMenuItem);
+
+        jMenuBar1.add(entriesMenu);
+
         setJMenuBar(jMenuBar1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -231,31 +250,27 @@ public class Frame extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jSeparator1)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(headerLabelImage, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(headerLabelText, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(jScrollPane2))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(processButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(clearButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addGap(0, 0, Short.MAX_VALUE)
-                                .addComponent(jButton1))
-                            .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jButton3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 248, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(downloadButton)
                             .addComponent(downloadLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addComponent(jScrollPane1))
+                    .addComponent(jScrollPane1)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                .addGroup(layout.createSequentialGroup()
+                                    .addComponent(headerLabelImage, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(headerLabelText, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(jScrollPane2))
+                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 248, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(processButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(clearButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(reprocessButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(tableViewButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -263,24 +278,22 @@ public class Frame extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(headerLabelImage, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(headerLabelText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jButton2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton3)))
-                .addGap(19, 19, 19)
-                .addComponent(jLabel1)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(headerLabelImage, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(headerLabelText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(19, 19, 19)
+                        .addComponent(jLabel1))
+                    .addComponent(clearButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane2)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(clearButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(processButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(reprocessButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(tableViewButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -308,44 +321,38 @@ public class Frame extends javax.swing.JFrame {
         clear();
     }//GEN-LAST:event_clearButtonActionPerformed
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void tableViewButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tableViewButtonActionPerformed
         openTableView();
-    }//GEN-LAST:event_jButton1ActionPerformed
+    }//GEN-LAST:event_tableViewButtonActionPerformed
 
     private void openRulesEditorItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openRulesEditorItemActionPerformed
         Main.openRulesEditor();
     }//GEN-LAST:event_openRulesEditorItemActionPerformed
 
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        Main.getEntryService().clearAllEntries();
-    }//GEN-LAST:event_jButton2ActionPerformed
+    private void reprocessButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_reprocessButtonActionPerformed
+        int result = statementParsingService.reprocess(entryService.getEntries());
+        updateConsole(result + " entries successfully reprocessed!");
+    }//GEN-LAST:event_reprocessButtonActionPerformed
 
-    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        String result = Main.getStatementParsingService()
-                .process(Collections.singletonList(new File("2019/Pat Checking.csv")));
-        if (StringUtils.isEmpty(result)) {
-            updateConsole("File successfully processed!");
-        } else {
-            updateConsole(result);
-        }
-    }//GEN-LAST:event_jButton3ActionPerformed
+    private void clearAllEntriesMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearAllEntriesMenuItemActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_clearAllEntriesMenuItemActionPerformed
 
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {}
+    public static void main(String[] args) {}
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenuItem clearAllEntriesMenuItem;
     private javax.swing.JButton clearButton;
     private javax.swing.JButton downloadButton;
     private javax.swing.JLabel downloadLabel;
+    private javax.swing.JMenu entriesMenu;
     private javax.swing.JMenu fileMenu;
     private javax.swing.JTextArea filesTextArea;
     private javax.swing.JLabel headerLabelImage;
     private javax.swing.JLabel headerLabelText;
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JScrollPane jScrollPane1;
@@ -354,6 +361,8 @@ public class Frame extends javax.swing.JFrame {
     private javax.swing.JTextArea log;
     private javax.swing.JMenuItem openRulesEditorItem;
     private javax.swing.JButton processButton;
+    private javax.swing.JButton reprocessButton;
     private javax.swing.JMenu rulesMenu;
+    private javax.swing.JButton tableViewButton;
     // End of variables declaration//GEN-END:variables
 }

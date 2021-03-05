@@ -408,10 +408,10 @@ public class RulesTableFrame extends javax.swing.JFrame {
         parsedDescriptionTextField.setNextFocusableComponent(categoryCombobox);
         parsedDescriptionTextField.setPreferredSize(new java.awt.Dimension(300, 26));
 
-        categoryCombobox.setModel(FormUtils.initCategoryComboBox());
+        categoryCombobox.setModel(FormUtils.initCategoryComboBox(EMPTY));
         categoryCombobox.setNextFocusableComponent(conditionalCheckbox);
 
-        categoryIICombobox.setModel(FormUtils.initCategoryComboBox());
+        categoryIICombobox.setModel(FormUtils.initCategoryComboBox(EMPTY));
         categoryIICombobox.setEnabled(false);
         categoryIICombobox.setNextFocusableComponent(descriptionTextField);
 
@@ -485,7 +485,7 @@ public class RulesTableFrame extends javax.swing.JFrame {
             }
         });
 
-        filterCategoryComboBox.setModel(FormUtils.initCategoryComboBox());
+        filterCategoryComboBox.setModel(FormUtils.initCategoryComboBox(Constants.ANY));
         filterCategoryComboBox.setMaximumSize(new java.awt.Dimension(50, 27));
         filterCategoryComboBox.setMinimumSize(new java.awt.Dimension(50, 27));
         filterCategoryComboBox.setNextFocusableComponent(filterDescriptionTextField);

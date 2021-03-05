@@ -10,6 +10,7 @@ import budge.model.Entry;
 import budge.model.EntryKey;
 import budge.model.ParsedEntry;
 import budge.service.EntryService;
+import budge.utils.Constants;
 import budge.utils.FormUtils;
 import budge.utils.StringUtils;
 import budge.utils.Utils;
@@ -17,16 +18,14 @@ import budge.views.modals.EditModal;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
- *
  * @author pat
  */
 public class EntryTableFrame extends javax.swing.JFrame {
-    
+
+    List<ParsedEntry> visibleEntries;
     EntryService entryService = Main.getEntryService();
 
     // table model used, with some customizations and overrides
@@ -41,7 +40,7 @@ public class EntryTableFrame extends javax.swing.JFrame {
         }
 
         @Override
-        public boolean isCellEditable(int row, int column){
+        public boolean isCellEditable(int row, int column) {
             return false;
         }
     };
@@ -79,15 +78,13 @@ public class EntryTableFrame extends javax.swing.JFrame {
         FormUtils.setColumnWidth(1, 120, table);
         FormUtils.setColumnWidth(2, 100, table);
         FormUtils.setColumnWidth(3, 170, table);
-        // leave 3 to stretch
-        FormUtils.setColumnWidth(5,100, table);
+        // leave 4 to stretch
+        FormUtils.setColumnWidth(5, 100, table);
         FormUtils.setColumnWidth(6, 175, table);
 
         table.removeColumn(table.getColumnModel().getColumn(7));
 
         table.setAutoCreateRowSorter(true);
-
-        addAllEntriesToTable(entryService.getEntries());
     }
 
     private void addAllEntriesToTable(List<ParsedEntry> entries) {
@@ -100,13 +97,13 @@ public class EntryTableFrame extends javax.swing.JFrame {
 
         for (int i = 0; i < entries.size(); i++) {
             ParsedEntry entry = entries.get(i);
-            model.addRow(new Object[] {
+            model.addRow(new Object[]{
                     null,
                     entry.getAccount(),
                     entry.getTransactionDate() == null ?
                             Utils.formatDate(entry.getDate()) : Utils.formatDate(entry.getTransactionDate()),
                     entry.getType() != null ? entry.getType().getType() : StringUtils.EMPTY,
-                    entry.getParsedDescription(),
+                    entry.getParsedDescription() == null ? entry.getDescription() : entry.getParsedDescription(),
                     Utils.formatDoubleForCurrency(Double.valueOf(entry.getParsedAmount())),
                     entry.getCategory() != null ? entry.getCategory().getCategory() : StringUtils.EMPTY,
                     entry.getKey()
@@ -117,18 +114,27 @@ public class EntryTableFrame extends javax.swing.JFrame {
                 nonParsedEntries++;
             }
         }
-        
+
         statusLabel.setText(entries.size() + " entries loaded! (" +
-            (entries.size() - nonParsedEntries) + " entries parsed, " + nonParsedEntries + " non-parsed)");
+                (entries.size() - nonParsedEntries) + " entries parsed, " + nonParsedEntries + " non-parsed)");
+    }
+
+    private void clearEntriesFromTable() {
+        model.setRowCount(0);
+    }
+
+    public void resetTable(List<ParsedEntry> entries) {
+        clearEntriesFromTable();
+        addAllEntriesToTable(entries);
     }
 
     private void editRows(int[] selectedRows) {
-        List<ParsedEntry> entries = new ArrayList<>();
+        Map<Integer, ParsedEntry> entries = new HashMap<>();
         for (int row : selectedRows) {
             EntryKey key = (EntryKey) model.getValueAt(row, 7);
             ParsedEntry entry = entryService.getEntryByKey(key);
             if (entry != null) {
-                entries.add(entry);
+                entries.put(row, entry);
             }
         }
         EditModal editModal = new EditModal(entries);
@@ -136,8 +142,30 @@ public class EntryTableFrame extends javax.swing.JFrame {
         editModal.setVisible(true);
     }
 
+    public void updateEntriesOnTable(Map<Integer, ParsedEntry> entries) {
+        Set<Integer> rows = entries.keySet();
+        for (Integer row : rows) {
+            ParsedEntry entry = entries.get(row);
+            model.setValueAt(entry.isParsed() ?
+                    new ImageIcon(this.getClass().getResource("/resources/img/check-sm.png")) :
+                    new ImageIcon(this.getClass().getResource("/resources/img/default-sm.png")), row, 0);
+            model.setValueAt(StringUtils.isEmpty(entry.getParsedDescription()) ?
+                    entry.getDescription() : entry.getParsedDescription(), row, 4);
+            model.setValueAt(entry.getCategory().getCategory(), row, 6);
+        }
+    }
+
+    /**
+     * Filters based on the criteria given
+     * @param account
+     * @param dateFrom
+     * @param dateTo
+     * @param description
+     * @param parsedString
+     * @param category
+     */
     private void filter(
-            String account, String dateFrom, String dateTo, String description, String parsedString, String category) {
+            String account, String dateFrom, String dateTo, String description, String type, String parsedString, String category) {
         Boolean parsed;
         if (account.equals("All")) {
             account = StringUtils.EMPTY;
@@ -148,12 +176,18 @@ public class EntryTableFrame extends javax.swing.JFrame {
         if (StringUtils.isEmpty(dateTo)) {
             dateTo = "01/01/2070";
         }
-        if (parsedString.equals("Any")) {
+        if (type.equals(Constants.ANY)) {
+            type = StringUtils.EMPTY;
+        }
+        if (parsedString.equals(Constants.ANY)) {
             parsed = null;
         } else {
             parsed = parsedString.equals("Parsed");
         }
-        List<ParsedEntry> filteredEntries = entryService.filter(account, dateFrom, dateTo, description, parsed, category);
+        if (category.equals(Constants.ANY)) {
+            category = StringUtils.EMPTY;
+        }
+        List<ParsedEntry> filteredEntries = entryService.filter(account, dateFrom, dateTo, description, type, parsed, category);
         filteredEntries.sort(Comparator.comparing(Entry::getDate));
         model.setRowCount(0);
         addAllEntriesToTable(filteredEntries);
@@ -168,7 +202,7 @@ public class EntryTableFrame extends javax.swing.JFrame {
     private void clear() {
         accountComboBox.setSelectedItem("All");
         dateToField.setText(StringUtils.EMPTY);
-        dateFromField.setText(StringUtils.EMPTY);;
+        dateFromField.setText(StringUtils.EMPTY);
         descriptionTextField.setText(StringUtils.EMPTY);
         parsedComboBox.setSelectedItem("Any");
         categoryComboBox.setSelectedItem(StringUtils.EMPTY);
@@ -205,6 +239,9 @@ public class EntryTableFrame extends javax.swing.JFrame {
         statusLabel = new javax.swing.JLabel();
         clearFilterButton = new javax.swing.JButton();
         parsedComboBox = new javax.swing.JComboBox<>();
+        typeLbl = new javax.swing.JLabel();
+        typeComboBox = new javax.swing.JComboBox<>();
+        jSeparator5 = new javax.swing.JSeparator();
         menuBar = new javax.swing.JMenuBar();
         fileMenu = new javax.swing.JMenu();
         exitMenuItem = new javax.swing.JMenuItem();
@@ -232,7 +269,7 @@ public class EntryTableFrame extends javax.swing.JFrame {
 
         accountComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "All", "Pat's Checking", "Pat's Savings", "Aimee's Checking", "Aimee's Savings", "Joint Checking", "Joint Savings" }));
 
-        categoryComboBox.setModel(FormUtils.initCategoryComboBox());
+        categoryComboBox.setModel(FormUtils.initCategoryComboBox(Constants.ANY));
 
         filterButton.setText("Filter");
         filterButton.addActionListener(new java.awt.event.ActionListener() {
@@ -259,6 +296,12 @@ public class EntryTableFrame extends javax.swing.JFrame {
         });
 
         parsedComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Any", "Parsed", "Not Parsed" }));
+
+        typeLbl.setText("Type:");
+
+        typeComboBox.setModel(FormUtils.initTransactionTypeComboBox());
+
+        jSeparator5.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
         fileMenu.setText("File");
 
@@ -317,9 +360,19 @@ public class EntryTableFrame extends javax.swing.JFrame {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(descriptionTextField)
+                                    .addComponent(descriptionLbl, javax.swing.GroupLayout.DEFAULT_SIZE, 179, Short.MAX_VALUE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(jSeparator5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(descriptionLbl, javax.swing.GroupLayout.DEFAULT_SIZE, 184, Short.MAX_VALUE)
-                                    .addComponent(descriptionTextField)))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(0, 0, Short.MAX_VALUE)
+                                        .addComponent(typeLbl, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(typeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(0, 0, Short.MAX_VALUE))))
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(6, 6, 6)
                                 .addComponent(statusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
@@ -327,12 +380,15 @@ public class EntryTableFrame extends javax.swing.JFrame {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jSeparator4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(7, 7, 7)
+                                        .addComponent(statusLbl, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(5, 5, 5)
+                                        .addComponent(parsedComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 121, javax.swing.GroupLayout.PREFERRED_SIZE)))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(statusLbl, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(parsedComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 121, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 1, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                     .addComponent(categoryComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -347,46 +403,53 @@ public class EntryTableFrame extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(parsedComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(filterLbl)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(filterLbl)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                .addComponent(jSeparator3, javax.swing.GroupLayout.Alignment.TRAILING)
+                                .addComponent(accountLbl)
+                                .addComponent(dateLbl)
                                 .addGroup(layout.createSequentialGroup()
+                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                        .addComponent(descriptionLbl)
+                                        .addComponent(typeLbl))
                                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                            .addGroup(layout.createSequentialGroup()
-                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                    .addComponent(accountLbl)
-                                                    .addComponent(dateLbl)
-                                                    .addComponent(descriptionLbl))
-                                                .addGap(0, 0, Short.MAX_VALUE))
-                                            .addComponent(categoryLbl, javax.swing.GroupLayout.Alignment.TRAILING))
-                                        .addComponent(statusLbl))
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                            .addComponent(accountComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(dateToField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(toLbl)
-                                            .addComponent(dateFromField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                            .addComponent(descriptionTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(categoryComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                                .addComponent(jSeparator2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jSeparator4, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(filterButton)
-                        .addComponent(clearFilterButton))
-                    .addComponent(statusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tableScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 500, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGroup(layout.createSequentialGroup()
+                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                            .addComponent(descriptionTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                            .addComponent(typeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                .addComponent(jSeparator5, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(statusLbl))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(categoryLbl)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(categoryComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                .addComponent(accountComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(dateToField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(toLbl)
+                                    .addComponent(dateFromField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                .addComponent(parsedComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jSeparator4, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(filterButton)
+                                .addComponent(clearFilterButton))
+                            .addComponent(statusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(tableScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 500, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
@@ -403,9 +466,10 @@ public class EntryTableFrame extends javax.swing.JFrame {
                 dateFromField.getText(),
                 dateToField.getText(),
                 descriptionTextField.getText(),
+                typeComboBox.getSelectedItem() != null ? typeComboBox.getSelectedItem().toString() : null,
                 parsedComboBox.getSelectedItem() != null ? parsedComboBox.getSelectedItem().toString() : null,
                 categoryComboBox.getSelectedItem() != null ? categoryComboBox.getSelectedItem().toString() : null
-                );
+        );
     }//GEN-LAST:event_filterButtonActionPerformed
 
     private void exitMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exitMenuItemActionPerformed
@@ -444,6 +508,7 @@ public class EntryTableFrame extends javax.swing.JFrame {
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
     private javax.swing.JSeparator jSeparator4;
+    private javax.swing.JSeparator jSeparator5;
     private javax.swing.JMenuBar menuBar;
     private javax.swing.JComboBox<String> parsedComboBox;
     private javax.swing.JLabel statusLabel;
@@ -451,5 +516,7 @@ public class EntryTableFrame extends javax.swing.JFrame {
     private javax.swing.JTable table;
     private javax.swing.JScrollPane tableScrollPane;
     private javax.swing.JLabel toLbl;
+    private javax.swing.JComboBox<String> typeComboBox;
+    private javax.swing.JLabel typeLbl;
     // End of variables declaration//GEN-END:variables
 }

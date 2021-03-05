@@ -11,6 +11,8 @@ public class Constants {
 
     public static final String TRUE = "TRUE";
     public static final String FALSE = "FALSE";
+    
+    public static final String ANY = "Any";
 
     public static int ACCOUNT_COL = 0;
     public static int DATE_COL = 1;

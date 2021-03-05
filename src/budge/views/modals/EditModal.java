@@ -5,16 +5,21 @@
  */
 package budge.views.modals;
 
+import budge.Main;
 import budge.model.Category;
 import budge.model.ParsedEntry;
+import budge.service.EntryService;
 import budge.utils.Constants;
 import budge.utils.FormUtils;
 import budge.utils.StringUtils;
 import budge.utils.Utils;
+import budge.views.EntryTableFrame;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -23,13 +28,19 @@ import java.util.List;
 public class EditModal extends javax.swing.JFrame {
 
     // globals
-    List<ParsedEntry> initialEntries;
+    Map<Integer, ParsedEntry> entries;
+
+    // service
+    EntryService entryService = Main.getEntryService();
+
+    // main table frame
+    EntryTableFrame entryTableFrame = Main.getEntryTableFrame();
 
     /**
      * Creates new form EditModal
      * @param entries
      */
-    public EditModal(List<ParsedEntry> entries) {
+    public EditModal(Map<Integer, ParsedEntry> entries) {
         // init the components
         // checks if we're in the EDT to prevent NoSuchElementExceptions and ArrayIndexOutOfBoundsExceptions
         if (SwingUtilities.isEventDispatchThread()) {
@@ -46,13 +57,16 @@ public class EditModal extends javax.swing.JFrame {
     /**
      * Populates the fields on the form
      */
-    private void populateFields(List<ParsedEntry> entries) {
+    private void populateFields(Map<Integer, ParsedEntry> entriesMap) {
 
         // set global
-        initialEntries = entries;
+        this.entries = entriesMap;
 
-        if (entries.size() == 1) {
-            ParsedEntry entry = entries.get(0);
+        // set local
+        List<ParsedEntry> entriesList = new ArrayList<>(entriesMap.values());
+
+        if (entriesList.size() == 1) {
+            ParsedEntry entry = entriesList.get(0);
             accountTextField.setText(entry.getAccount());
             transactionDateTextField.setText(Utils.formatDate(entry.getTransactionDate()));
             postDateTextField.setText(Utils.formatDate(entry.getDate()));
@@ -60,7 +74,8 @@ public class EditModal extends javax.swing.JFrame {
             amountTextField.setText(entry.getParsedAmount());
             categoryComboBox.setSelectedItem(entry.getCategory() != null ?
                     entry.getCategory().getCategory() : null);
-            descriptionTextArea.setText(entry.getParsedDescription());
+            descriptionTextArea.setText(StringUtils.isEmpty(entry.getParsedDescription()) ?
+                    entry.getDescription() : entry.getParsedDescription());
             notesTextArea.setText(entry.getNotes());
             checkTextField.setText(entry.getCheck());
             idTextField.setText(entry.getId());
@@ -70,13 +85,14 @@ public class EditModal extends javax.swing.JFrame {
                     StringUtils.EMPTY : entry.getMerchantCode().toString());
             statusTextField.setText(entry.getStatus());
             endingBalanceTextField.setText(entry.getEndingBalance().toString());
+            parsedCheckBox.setSelected(entry.isParsed());
         } else {
 
             boolean allMatch = true;
-            ParsedEntry first = entries.get(0);
+            ParsedEntry first = entriesList.get(0);
             String account = first.getAccount();
-            for (int i = 1; i < entries.size(); i++) {
-                if (!account.equals(entries.get(i).getAccount())) {
+            for (int i = 1; i < entriesList.size(); i++) {
+                if (!account.equals(entriesList.get(i).getAccount())) {
                     allMatch = false;
                     break;
                 }
@@ -85,8 +101,8 @@ public class EditModal extends javax.swing.JFrame {
 
             allMatch = true;
             Date date = first.getTransactionDate();
-            for (int i = 1; i < entries.size(); i++) {
-                if (date != entries.get(i).getTransactionDate()) {
+            for (int i = 1; i < entriesList.size(); i++) {
+                if (date != entriesList.get(i).getTransactionDate()) {
                     allMatch = false;
                     break;
                 }
@@ -95,8 +111,8 @@ public class EditModal extends javax.swing.JFrame {
 
             allMatch = true;
             Date postDate = first.getDate();
-            for (int i = 1; i < entries.size(); i++) {
-                if (postDate != entries.get(i).getDate()) {
+            for (int i = 1; i < entriesList.size(); i++) {
+                if (postDate != entriesList.get(i).getDate()) {
                     allMatch = false;
                     break;
                 }
@@ -105,8 +121,8 @@ public class EditModal extends javax.swing.JFrame {
 
             allMatch = true;
             budge.model.Type type = first.getType();
-            for (int i = 1; i < entries.size(); i++) {
-                if (type != entries.get(i).getType()) {
+            for (int i = 1; i < entriesList.size(); i++) {
+                if (type != entriesList.get(i).getType()) {
                     allMatch = false;
                     break;
                 }
@@ -115,8 +131,8 @@ public class EditModal extends javax.swing.JFrame {
 
             allMatch = true;
             String amount = first.getParsedAmount();
-            for (int i = 1; i < entries.size(); i++) {
-                if (!amount.equals(entries.get(i).getParsedAmount())) {
+            for (int i = 1; i < entriesList.size(); i++) {
+                if (!amount.equals(entriesList.get(i).getParsedAmount())) {
                     allMatch = false;
                     break;
                 }
@@ -125,8 +141,8 @@ public class EditModal extends javax.swing.JFrame {
 
             allMatch = true;
             Category category = first.getCategory();
-            for (int i = 1; i < entries.size(); i++) {
-                if (category != entries.get(i).getCategory()) {
+            for (int i = 1; i < entriesList.size(); i++) {
+                if (category != entriesList.get(i).getCategory()) {
                     allMatch = false;
                     break;
                 }
@@ -134,10 +150,10 @@ public class EditModal extends javax.swing.JFrame {
             categoryComboBox.setSelectedItem(allMatch ? category.getCategory() : StringUtils.EMPTY);
 
             allMatch = true;
-            String description = first.getDescription();
-            for (int i = 1; i < entries.size(); i++) {
+            String description = first.getParsedDescription();
+            for (int i = 1; i < entriesList.size(); i++) {
                 if (description != null &&
-                        !description.equals(entries.get(i).getDescription())) {
+                        !description.equals(entriesList.get(i).getDescription())) {
                     allMatch = false;
                     break;
                 }
@@ -146,8 +162,8 @@ public class EditModal extends javax.swing.JFrame {
 
             allMatch = true;
             String notes = first.getNotes();
-            for (int i = 1; i < entries.size(); i++) {
-                if (!notes.equals(entries.get(i).getNotes())) {
+            for (int i = 1; i < entriesList.size(); i++) {
+                if (!notes.equals(entriesList.get(i).getNotes())) {
                     allMatch = false;
                     break;
                 }
@@ -156,8 +172,8 @@ public class EditModal extends javax.swing.JFrame {
 
             allMatch = true;
             String check = first.getCheck();
-            for (int i = 1; i < entries.size(); i++) {
-                if (!check.equals(entries.get(i).getCheck())) {
+            for (int i = 1; i < entriesList.size(); i++) {
+                if (!check.equals(entriesList.get(i).getCheck())) {
                     allMatch = false;
                     break;
                 }
@@ -166,8 +182,8 @@ public class EditModal extends javax.swing.JFrame {
 
             allMatch = true;
             String id = first.getId();
-            for (int i = 1; i < entries.size(); i++) {
-                if (!id.equals(entries.get(i).getId())) {
+            for (int i = 1; i < entriesList.size(); i++) {
+                if (!id.equals(entriesList.get(i).getId())) {
                     allMatch = false;
                     break;
                 }
@@ -176,9 +192,9 @@ public class EditModal extends javax.swing.JFrame {
 
             allMatch = true;
             Integer debitCard = first.getCard();
-            for (int i = 1; i < entries.size(); i++) {
+            for (int i = 1; i < entriesList.size(); i++) {
                 if (debitCard != null &&
-                        !debitCard.equals(entries.get(i).getCard())) {
+                        !debitCard.equals(entriesList.get(i).getCard())) {
                     allMatch = false;
                     break;
                 }
@@ -186,19 +202,29 @@ public class EditModal extends javax.swing.JFrame {
             debitCardTextField.setText(allMatch ? String.valueOf(debitCard) : Constants.DASH);
 
             allMatch = true;
-            Integer merchantCode = first.getMerchantCode();
-            for (int i = 1; i < entries.size(); i++) {
-                if (!merchantCode.equals(entries.get(i).getMerchantCode())) {
-                    allMatch = false;
-                    break;
+            // get the first good merchant code
+            Integer merchantCode = null;
+            for (ParsedEntry entry : entriesList) {
+                if (entry.getMerchantCode() != null) {
+                    merchantCode = entry.getMerchantCode();
                 }
             }
-            merchantCodeTextField.setText(allMatch ? merchantCode.toString() : Constants.DASH);
+            if (merchantCode != null) {
+                for (int i = 0; i < entriesList.size(); i++) {
+                    if (!merchantCode.equals(entriesList.get(i).getMerchantCode())) {
+                        allMatch = false;
+                        break;
+                    }
+                }
+                merchantCodeTextField.setText(allMatch ? merchantCode.toString() : Constants.DASH);
+            } else {
+                merchantCodeTextField.setText(StringUtils.EMPTY);
+            }
 
             allMatch = true;
             String status = first.getStatus();
-            for (int i = 1; i < entries.size(); i++) {
-                if (!status.equals(entries.get(i).getStatus())) {
+            for (int i = 1; i < entriesList.size(); i++) {
+                if (!status.equals(entriesList.get(i).getStatus())) {
                     allMatch = false;
                     break;
                 }
@@ -207,14 +233,47 @@ public class EditModal extends javax.swing.JFrame {
 
             allMatch = true;
             Double endingBalance = first.getEndingBalance();
-            for (int i = 1; i < entries.size(); i++) {
-                if (!endingBalance.equals(entries.get(i).getEndingBalance())) {
+            for (int i = 1; i < entriesList.size(); i++) {
+                if (!endingBalance.equals(entriesList.get(i).getEndingBalance())) {
                     allMatch = false;
                     break;
                 }
             }
             endingBalanceTextField.setText(allMatch ? endingBalance.toString() : Constants.DASH);
+
+            allMatch = true;
+            boolean parsed = first.isParsed();
+            for (int i = 1; i < entriesList.size(); i++) {
+                if (parsed != entriesList.get(i).isParsed()) {
+                    allMatch = false;
+                    break;
+                }
+            }
+            parsedCheckBox.setSelected(allMatch);
         }
+    }
+
+    private void submitFields() {
+        List<ParsedEntry> entriesList = new ArrayList<>(entries.values());
+        List<ParsedEntry> initialEntries = new ArrayList<>();
+        for (ParsedEntry entry : entriesList) {
+            initialEntries.add(entry.clone());
+            if (categoryComboBox.getSelectedItem() != null) {
+                entry.setCategory(Category.fromString(categoryComboBox.getSelectedItem().toString()));
+            }
+            entry.setParsedDescription(descriptionTextArea.getText());
+            entry.setNotes(notesTextArea.getText());
+            entry.setParsed(parsedCheckBox.isSelected());
+        }
+
+        // update those entries
+        String result = entryService.updateEntries(initialEntries, entriesList);
+        if (StringUtils.isEmpty(result)) {
+            Main.getEntryTableFrame().updateEntriesOnTable(entries);
+        }
+
+        // close this window
+        this.dispose();
     }
 
     /**
@@ -256,6 +315,7 @@ public class EditModal extends javax.swing.JFrame {
         merchantCodeTextField = new javax.swing.JTextField();
         statusTextField = new javax.swing.JTextField();
         endingBalanceTextField = new javax.swing.JTextField();
+        parsedCheckBox = new javax.swing.JCheckBox();
         submitButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -348,16 +408,20 @@ public class EditModal extends javax.swing.JFrame {
         amountTextField.setPreferredSize(new java.awt.Dimension(150, 26));
 
         categoryComboBox.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
-        categoryComboBox.setModel(FormUtils.initCategoryComboBox());
+        categoryComboBox.setModel(FormUtils.initCategoryComboBox(StringUtils.EMPTY));
 
         descriptionTextArea.setColumns(20);
         descriptionTextArea.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
+        descriptionTextArea.setLineWrap(true);
         descriptionTextArea.setRows(5);
+        descriptionTextArea.setWrapStyleWord(true);
         descriptionScrollPane.setViewportView(descriptionTextArea);
 
         notesTextArea.setColumns(20);
         notesTextArea.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
+        notesTextArea.setLineWrap(true);
         notesTextArea.setRows(5);
+        notesTextArea.setWrapStyleWord(true);
         notesScrollpane.setViewportView(notesTextArea);
 
         checkTextField.setEditable(false);
@@ -396,7 +460,14 @@ public class EditModal extends javax.swing.JFrame {
         endingBalanceTextField.setMinimumSize(new java.awt.Dimension(150, 26));
         endingBalanceTextField.setPreferredSize(new java.awt.Dimension(150, 26));
 
+        parsedCheckBox.setText("Parsed");
+
         submitButton.setText("Submit");
+        submitButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                submitButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -404,26 +475,31 @@ public class EditModal extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(jLabel14, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel13, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel12, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel11, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel10, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(amountLbl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(accountLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(transactionDateLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(postDateLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(checkLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(typeLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(categoryLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(descriptionLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(jLabel14, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel13, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel12, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel11, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel10, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(amountLbl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(accountLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(transactionDateLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(postDateLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(checkLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(typeLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(categoryLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(descriptionLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(parsedCheckBox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(submitButton, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(descriptionScrollPane)
+                    .addComponent(notesScrollpane)
+                    .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(descriptionScrollPane)
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                                 .addComponent(endingBalanceTextField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(statusTextField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -432,16 +508,13 @@ public class EditModal extends javax.swing.JFrame {
                                 .addComponent(idTextField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(checkTextField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addComponent(categoryComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(notesScrollpane)
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                                 .addComponent(accountTextField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(transactionDateTextField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(postDateTextField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(typeTextField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(amountTextField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(submitButton, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(amountTextField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -504,12 +577,18 @@ public class EditModal extends javax.swing.JFrame {
                     .addComponent(jLabel14)
                     .addComponent(endingBalanceTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(submitButton, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(submitButton, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(parsedCheckBox))
                 .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void submitButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_submitButtonActionPerformed
+        submitFields();
+    }//GEN-LAST:event_submitButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -540,6 +619,7 @@ public class EditModal extends javax.swing.JFrame {
     private javax.swing.JTextField merchantCodeTextField;
     private javax.swing.JScrollPane notesScrollpane;
     private javax.swing.JTextArea notesTextArea;
+    private javax.swing.JCheckBox parsedCheckBox;
     private javax.swing.JLabel postDateLbl;
     private javax.swing.JTextField postDateTextField;
     private javax.swing.JTextField statusTextField;

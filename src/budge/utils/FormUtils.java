@@ -10,14 +10,27 @@ public class FormUtils {
 
     /**
      * Initializes the category combobox with the list of categories
+     * @param firstElement the first element in the list
      * @return the comboboxmodel to use in the combobox
      */
-    public static DefaultComboBoxModel<String> initCategoryComboBox() {
+    public static DefaultComboBoxModel<String> initCategoryComboBox(String firstElement) {
         DefaultComboBoxModel<String> comboBoxModel = new DefaultComboBoxModel<>();
-        comboBoxModel.addElement(StringUtils.EMPTY);
+        comboBoxModel.addElement(firstElement);
         for (Category category : Category.values()) {
             comboBoxModel.addElement(category.getCategory());
         }
+        return comboBoxModel;
+    }
+    
+    /**
+     * Initializes the withdrawal/deposit combobox
+     * @return the comboboxmodel to use in the combobox
+     */
+    public static DefaultComboBoxModel<String> initTransactionTypeComboBox() {
+        DefaultComboBoxModel<String> comboBoxModel = new DefaultComboBoxModel<>();
+        comboBoxModel.addElement(Constants.ANY);
+        comboBoxModel.addElement("Withdrawal");
+        comboBoxModel.addElement("Deposit");
         return comboBoxModel;
     }
 

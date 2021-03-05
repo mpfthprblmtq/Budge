@@ -142,9 +142,9 @@ public class RulesService {
      * Parses a rule on an entry by checking to see if a rule exists for the given entry's description
      * @param entry the entry to run the rule on
      */
-    public void applyRule(ParsedEntry entry) {
+    public boolean applyRule(ParsedEntry entry) {
         for (Rule rule : rulesRepository.getRules()) {
-            if (entry.getDescription().toUpperCase().contains(rule.getToReplace())) {
+            if (!entry.isParsed() && entry.getDescription().toUpperCase().contains(rule.getToReplace())) {
 
                 // category
                 if (rule.getConditionalAmount() != null) {
@@ -165,7 +165,9 @@ public class RulesService {
                     }
                 }
                 entry.setParsed(true);
+                return true;
             }
         }
+        return false;
     }
 }

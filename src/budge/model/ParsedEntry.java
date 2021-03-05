@@ -4,7 +4,7 @@ import budge.utils.Constants;
 import budge.utils.StringUtils;
 import budge.utils.Utils;
 
-public class ParsedEntry extends Entry {
+public class ParsedEntry extends Entry implements Cloneable {
 
     private Category category;
     private String parsedDescription;
@@ -26,7 +26,11 @@ public class ParsedEntry extends Entry {
         this.setCheck(data[3]);
         this.setType(Type.fromString(data[4]));
         this.setMethod(Method.fromString(data[5]));
-        this.setParsedDescription(data[6]);
+        if (this.isParsed()) {
+            this.setParsedDescription(data[6]);
+        } else {
+            this.setDescription(data[6]);
+        }
         this.setTransactionDate(Utils.formatDate(data[7]));
         this.setId(data[8]);
         this.setCard(Utils.isEmpty(data[9]) ? null : Integer.valueOf(data[9]));
@@ -96,7 +100,9 @@ public class ParsedEntry extends Entry {
                 .concat(Constants.COMMA)
                 .concat(super.getMethod() == null ? StringUtils.EMPTY : super.getMethod().getMethod())
                 .concat(Constants.COMMA)
-                .concat(Utils.isEmpty(parsedDescription) ? super.getDescription() : parsedDescription)
+                .concat(Utils.isEmpty(parsedDescription) ?
+                        (StringUtils.isEmpty(super.getDescription()) ?
+                                StringUtils.EMPTY : super.getDescription()) : parsedDescription)
                 .concat(Constants.COMMA)
                 .concat(Utils.formatDateSimple(super.getTransactionDate()))
                 .concat(Constants.COMMA)
@@ -115,6 +121,15 @@ public class ParsedEntry extends Entry {
                 .concat(category == null ? StringUtils.EMPTY : category.getCategory())
                 .concat(Constants.COMMA)
                 .concat(Utils.isEmpty(notes) ? StringUtils.EMPTY : notes);
+    }
+
+    @Override
+    public ParsedEntry clone() {
+        try {
+            return (ParsedEntry) super.clone();
+        } catch (CloneNotSupportedException e) {
+            return new ParsedEntry();
+        }
     }
 
     public boolean isParsed() {

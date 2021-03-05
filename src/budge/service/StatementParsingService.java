@@ -6,6 +6,7 @@ import budge.model.Entry;
 import budge.model.ParsedEntry;
 import budge.utils.Constants;
 import budge.utils.StringUtils;
+import budge.utils.Utils;
 
 import java.io.*;
 import java.util.*;
@@ -50,6 +51,39 @@ public class StatementParsingService {
         // got here, so all is fine
         entryService.addParsedEntries(parsedEntries);
         return null;
+    }
+
+    /**
+     * Takes in the list of entries we already have and parses them if they need parsing
+     * @param entries, the entries list to reprocess
+     */
+    public int reprocess(List<ParsedEntry> entries) {
+        List<ParsedEntry> initialEntries = new ArrayList<>();
+        List<ParsedEntry> reprocessedEntries = new ArrayList<>();
+        for (ParsedEntry entry : entries) {
+            if (!entry.isParsed()) {
+                ParsedEntry initialEntry = entry.clone();
+                initialEntries.add(initialEntry);
+
+                // try to apply a rule to the entry
+                boolean result = rulesService.applyRule(entry);
+
+                // check to see if the rule was applied
+                if (result) {
+                    // rule was successfully applied, add the new entry to the reprocessed entries list
+                    reprocessedEntries.add(entry);
+                    if (entry.getCategory() == Category.TRANSFER) {
+                        parseTransfer(entry);
+                    }
+                    accountService.matchAccount(entry);
+                } else {
+                    // rule wasn't applied, remove the initial entry from the initial entries list
+                    initialEntries.remove(initialEntry);
+                }
+            }
+        }
+        entryService.updateEntries(initialEntries, reprocessedEntries);
+        return reprocessedEntries.size();
     }
 
     /**
@@ -118,8 +152,20 @@ public class StatementParsingService {
     }
 
     public void parseTransfer(ParsedEntry entry) {
-        // TODO this
-        System.out.println(entry.getDescription());
+        String parsedDescription = entry.getDescription();
+
+        // get rid of the prefixes and suffixes
+        parsedDescription = parsedDescription.replace("- -SCU Mobile/", StringUtils.EMPTY);
+        parsedDescription = parsedDescription.replace("Home Banking Transfer/", StringUtils.EMPTY);
+        parsedDescription = parsedDescription.replace("/-SCU Mobile", StringUtils.EMPTY);
+        parsedDescription = parsedDescription.replaceFirst("- ", StringUtils.EMPTY);
+
+        // figure out where it came from and where it's going
+        // TODO
+//        System.out.println(Utils.formatDateSimple(entry.getDate()) + " - " + parsedDescription);
+
+        // set the parsed description to the... parsed description
+        entry.setParsedDescription(parsedDescription);
     }
     
 }

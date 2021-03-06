@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -87,169 +88,125 @@ public class EditModal extends javax.swing.JFrame {
             parsedCheckBox.setSelected(entry.isParsed());
         } else {
 
-            boolean allMatch = true;
-            ParsedEntry first = entriesList.get(0);
-            String account = first.getAccount();
-            for (int i = 1; i < entriesList.size(); i++) {
-                if (!account.equals(entriesList.get(i).getAccount())) {
-                    allMatch = false;
-                    break;
-                }
-            }
-            accountTextField.setText(allMatch ? account : Constants.DASH);
+            // account
+            List<String> accounts = entriesList.stream().map(ParsedEntry::getAccount).collect(Collectors.toList());
+            accountTextField.setText(compareValuesInList(accounts));
 
-            allMatch = true;
-            Date date = first.getTransactionDate();
-            for (int i = 1; i < entriesList.size(); i++) {
-                if (date != entriesList.get(i).getTransactionDate()) {
-                    allMatch = false;
-                    break;
-                }
-            }
-            transactionDateTextField.setText(allMatch ? Utils.formatDateSimple(date) : Constants.DASH);
-
-            allMatch = true;
-            Date postDate = first.getDate();
-            for (int i = 1; i < entriesList.size(); i++) {
-                if (postDate != entriesList.get(i).getDate()) {
-                    allMatch = false;
-                    break;
-                }
-            }
-            postDateTextField.setText(allMatch ? Utils.formatDateSimple(postDate) : Constants.DASH);
-
-            allMatch = true;
-            budge.model.Type type = first.getType();
-            for (int i = 1; i < entriesList.size(); i++) {
-                if (type != entriesList.get(i).getType()) {
-                    allMatch = false;
-                    break;
-                }
-            }
-            typeTextField.setText(allMatch ? type.toString() : Constants.DASH);
-
-            allMatch = true;
-            String amount = first.getParsedAmount();
-            for (int i = 1; i < entriesList.size(); i++) {
-                if (!amount.equals(entriesList.get(i).getParsedAmount())) {
-                    allMatch = false;
-                    break;
-                }
-            }
-            amountTextField.setText(allMatch ? amount : Constants.DASH);
-
-            allMatch = true;
-            Category category = first.getCategory();
-            for (int i = 1; i < entriesList.size(); i++) {
-                if (category != entriesList.get(i).getCategory()) {
-                    allMatch = false;
-                    break;
-                }
-            }
-            categoryComboBox.setSelectedItem(allMatch ? category.getCategory() : StringUtils.EMPTY);
-
-            allMatch = true;
-            String description = first.getDescription();
-            for (int i = 1; i < entriesList.size(); i++) {
-                if (description != null &&
-                        !description.equals(entriesList.get(i).getDescription())) {
-                    allMatch = false;
-                    break;
-                }
-            }
-            descriptionTextArea.setText(allMatch ? description : Constants.DASH);
-
-            allMatch = true;
-            String notes = first.getNotes();
-            for (int i = 1; i < entriesList.size(); i++) {
-                if (!notes.equals(entriesList.get(i).getNotes())) {
-                    allMatch = false;
-                    break;
-                }
-            }
-            notesTextArea.setText(allMatch ? notes : Constants.DASH);
-
-            allMatch = true;
-            String check = first.getCheck();
-            for (int i = 1; i < entriesList.size(); i++) {
-                if (!check.equals(entriesList.get(i).getCheck())) {
-                    allMatch = false;
-                    break;
-                }
-            }
-            checkTextField.setText(allMatch ? check : Constants.DASH);
-
-            allMatch = true;
-            String id = first.getId();
-            for (int i = 1; i < entriesList.size(); i++) {
-                if (!id.equals(entriesList.get(i).getId())) {
-                    allMatch = false;
-                    break;
-                }
-            }
-            idTextField.setText(allMatch ? id : Constants.DASH);
-
-            allMatch = true;
-            Integer debitCard = first.getCard();
-            for (int i = 1; i < entriesList.size(); i++) {
-                if (debitCard != null &&
-                        !debitCard.equals(entriesList.get(i).getCard())) {
-                    allMatch = false;
-                    break;
-                }
-            }
-            debitCardTextField.setText(allMatch ? String.valueOf(debitCard) : Constants.DASH);
-
-            allMatch = true;
-            // get the first good merchant code
-            Integer merchantCode = null;
+            // date
+            List<String> dates = new ArrayList<>();
             for (ParsedEntry entry : entriesList) {
-                if (entry.getMerchantCode() != null) {
-                    merchantCode = entry.getMerchantCode();
-                }
+                dates.add(Utils.formatDateSimple(entry.getDate()));
             }
-            if (merchantCode != null) {
-                for (int i = 0; i < entriesList.size(); i++) {
-                    if (!merchantCode.equals(entriesList.get(i).getMerchantCode())) {
-                        allMatch = false;
-                        break;
-                    }
-                }
-                merchantCodeTextField.setText(allMatch ? merchantCode.toString() : Constants.DASH);
-            } else {
-                merchantCodeTextField.setText(StringUtils.EMPTY);
-            }
+            postDateTextField.setText(compareValuesInList(dates));
 
-            allMatch = true;
-            String status = first.getStatus();
-            for (int i = 1; i < entriesList.size(); i++) {
-                if (!status.equals(entriesList.get(i).getStatus())) {
-                    allMatch = false;
-                    break;
-                }
+            // transaction date
+            List<String> transactionDates = new ArrayList<>();
+            for (ParsedEntry entry : entriesList) {
+                transactionDates.add(Utils.formatDateSimple(entry.getTransactionDate()));
             }
-            statusTextField.setText(allMatch ? status : Constants.DASH);
+            transactionDateTextField.setText(compareValuesInList(transactionDates));
 
-            allMatch = true;
-            Double endingBalance = first.getEndingBalance();
-            for (int i = 1; i < entriesList.size(); i++) {
-                if (!endingBalance.equals(entriesList.get(i).getEndingBalance())) {
-                    allMatch = false;
-                    break;
-                }
+            // type
+            List<String> types = new ArrayList<>();
+            for (ParsedEntry entry : entriesList) {
+                types.add(entry.getType().getType());
             }
-            endingBalanceTextField.setText(allMatch ? endingBalance.toString() : Constants.DASH);
+            typeTextField.setText(compareValuesInList(types));
 
-            allMatch = true;
-            boolean parsed = first.isParsed();
-            for (int i = 1; i < entriesList.size(); i++) {
-                if (parsed != entriesList.get(i).isParsed()) {
-                    allMatch = false;
-                    break;
-                }
+            // amount
+            List<String> amounts = entriesList.stream().map(ParsedEntry::getParsedAmount).collect(Collectors.toList());
+            amountTextField.setText(compareValuesInList(amounts));
+
+            // category
+            List<String> categories = new ArrayList<>();
+            for (ParsedEntry entry : entriesList) {
+                categories.add(entry.getCategory() != null ? entry.getCategory().getCategory() : StringUtils.EMPTY);
             }
-            parsedCheckBox.setSelected(allMatch);
+            categoryComboBox.setSelectedItem(compareValuesInList(categories));
+
+            // description
+            List<String> descriptions = entriesList.stream().map(ParsedEntry::getDescription).collect(Collectors.toList());
+            descriptionTextArea.setText(compareValuesInList(descriptions));
+
+            // note
+            List<String> notes = entriesList.stream().map(ParsedEntry::getNotes).collect(Collectors.toList());
+            notesTextArea.setText(compareValuesInList(notes));
+
+            // check
+            List<String> checks = entriesList.stream().map(ParsedEntry::getCheck).collect(Collectors.toList());
+            checkTextField.setText(compareValuesInList(checks));
+
+            // id
+            List<String> ids = entriesList.stream().map(ParsedEntry::getId).collect(Collectors.toList());
+            idTextField.setText(compareValuesInList(ids));
+
+            // debit card
+            List<String> cards = entriesList.stream()
+                    .map(ParsedEntry::getCard)
+                    .map(String::valueOf)
+                    .collect(Collectors.toList());
+            debitCardTextField.setText(compareValuesInList(cards));
+
+            // merchant code
+            List<String> merchantCodes = entriesList.stream()
+                    .map(ParsedEntry::getMerchantCode)
+                    .map(String::valueOf)
+                    .collect(Collectors.toList());
+            merchantCodeTextField.setText(compareValuesInList(merchantCodes));
+
+            // status
+            List<String> statuses = entriesList.stream().map(ParsedEntry::getStatus).collect(Collectors.toList());
+            statusTextField.setText(compareValuesInList(statuses));
+
+            // ending balance
+            List<String> endingBalances = entriesList.stream()
+                    .map(ParsedEntry::getEndingBalance)
+                    .map(String::valueOf)
+                    .collect(Collectors.toList());
+            endingBalanceTextField.setText(compareValuesInList(endingBalances));
+
+            // parsed
+            List<String> parsedList = entriesList.stream()
+                    .map(ParsedEntry::isParsed)
+                    .map(String::valueOf)
+                    .collect(Collectors.toList());
+            String parsed = compareValuesInList(parsedList);
+            parsedCheckBox.setSelected(parsed.equalsIgnoreCase(Constants.TRUE));
         }
+    }
+
+    /**
+     * Utility function that checks to see if all values in a list are equal
+     * @param values, the list of String values to check
+     * @return the result of the check, nothing if no data at all, a dash if the data is different, and the value if all
+     * of the values are the same
+     */
+    private String compareValuesInList(List<String> values) {
+
+        // get the first non-null value
+        String goodValue = null;
+        for (String value : values) {
+            if (StringUtils.isNotEmpty(value)) {
+                goodValue = value;
+                break;
+            }
+        }
+
+        // check to see if we have a good value
+        if (StringUtils.isEmpty(goodValue)) {
+            // no good value found, that means we don't have any data for this attribute, return nothing
+            return StringUtils.EMPTY;
+        }
+
+        // check to see if all values in the list equal the initial good value
+        for (String value : values) {
+            if (!value.equals(goodValue)) {
+                return Constants.DASH;
+            }
+        }
+
+        // we got here, so all the values are equal to each other, return that value
+        return goodValue;
     }
 
     private void submitFields() {
@@ -260,15 +217,22 @@ public class EditModal extends javax.swing.JFrame {
             if (categoryComboBox.getSelectedItem() != null) {
                 entry.setCategory(Category.fromString(categoryComboBox.getSelectedItem().toString()));
             }
-            entry.setDescription(descriptionTextArea.getText());
-            entry.setNotes(notesTextArea.getText());
+            if (!descriptionTextArea.getText().equals(Constants.DASH)) {
+                entry.setDescription(descriptionTextArea.getText().replace(Constants.NEWLINE, Constants.SPACE));
+            }
+            if (!notesTextArea.getText().equals(Constants.DASH)) {
+                entry.setNotes(notesTextArea.getText().replace(Constants.NEWLINE, Constants.SPACE));
+            }
             entry.setParsed(parsedCheckBox.isSelected());
         }
 
         // update those entries
         String result = entryService.updateEntries(initialEntries, entriesList);
         if (StringUtils.isEmpty(result)) {
+            Main.getEntryTableFrame().updateStatusLabel(entriesList.size() + " entries updated!");
             Main.getEntryTableFrame().updateEntriesOnTable(entries);
+        } else {
+            Main.getEntryTableFrame().updateStatusLabel(result);
         }
 
         // close this window

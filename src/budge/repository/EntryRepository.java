@@ -173,20 +173,24 @@ public class EntryRepository {
             reader.close();
 
             // do the replace(s)
-            int entriesNotFound = 0;
+            List<ParsedEntry> initialEntriesNotFound = new ArrayList<>();
             for (ParsedEntry initialEntry : initialEntries) {
                 String toReplace = initialEntry.toString();
                 String replaceWith = entriesToUpdate.get(initialEntry).toString();
                 String fileContents = inputBuffer.toString();
-                String newFileContents = fileContents.replace(initialEntry.toString(), entriesToUpdate.get(initialEntry).toString());
+                String newFileContents = fileContents.replace(toReplace, replaceWith);
                 if (fileContents.equals(newFileContents)) {
-                    entriesNotFound++;
+                    // check to see if the reason why it "wasn't found" was that we're just overwriting the entry
+                    // with the same entry
+                    if (!toReplace.equals(replaceWith)) {
+                        initialEntriesNotFound.add(initialEntry);
+                    }
                 }
             }
 
             // check to see if there are any entries not updated
-            if (entriesNotFound > 0) {
-                throw new EntryNotFoundException(entriesNotFound + " entries not found!");
+            if (initialEntriesNotFound.size() > 0) {
+                throw new EntryNotFoundException(initialEntriesNotFound.size() + " entries not found!");
             }
 
             // write out the new file contents to the file

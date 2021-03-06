@@ -145,6 +145,10 @@ public class EntryTableFrame extends javax.swing.JFrame {
                 (entries.size() - nonParsedEntries) + " entries parsed, " + nonParsedEntries + " non-parsed)");
     }
 
+    public void updateStatusLabel(String text) {
+        statusLabel.setText(text);
+    }
+
     private void clearEntriesFromTable() {
         model.setRowCount(0);
     }
@@ -177,7 +181,7 @@ public class EntryTableFrame extends javax.swing.JFrame {
                     new ImageIcon(this.getClass().getResource("/resources/img/default-sm.png")), row, 0);
             model.setValueAt(StringUtils.isEmpty(entry.getDescription()) ?
                     entry.getDescription() : entry.getDescription(), row, 4);
-            model.setValueAt(entry.getCategory().getCategory(), row, 6);
+            model.setValueAt(entry.getCategory() != null ? entry.getCategory().getCategory() : StringUtils.EMPTY, row, 6);
         }
     }
 

@@ -238,6 +238,9 @@
               <Font name="Lucida Sans Typewriter" size="12" style="0"/>
             </Property>
           </Properties>
+          <Events>
+            <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="tableMousePressed"/>
+          </Events>
         </Component>
       </SubComponents>
     </Container>

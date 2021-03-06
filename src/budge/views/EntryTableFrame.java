@@ -18,15 +18,18 @@ import budge.views.modals.EditModal;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
 
 /**
  * @author pat
  */
 public class EntryTableFrame extends javax.swing.JFrame {
-
-    List<ParsedEntry> visibleEntries;
     EntryService entryService = Main.getEntryService();
+
+    // some graphics ivars
+    ActionListener menuListener;        // listener for the popup menu objects
 
     // table model used, with some customizations and overrides
     DefaultTableModel model = new DefaultTableModel() {
@@ -85,6 +88,29 @@ public class EntryTableFrame extends javax.swing.JFrame {
         table.removeColumn(table.getColumnModel().getColumn(7));
 
         table.setAutoCreateRowSorter(true);
+
+        // set up the context menu listener
+        setupMenuListener();
+    }
+
+    private void setupMenuListener() {
+        // listener for the context menu when you right click on a row
+        // basically tells the program where to go based on the user's choice
+        this.menuListener = (ActionEvent event) -> {
+
+            // get all the rows selected
+            int[] selectedRows = table.getSelectedRows();
+
+            // switch based on the option selected
+            switch (event.getActionCommand()) {
+                case "Edit Entry":
+                case "Edit Entries":
+                    editRows(selectedRows);
+                    break;
+                default:
+                    break;
+            }
+        }; // end menuListener
     }
 
     private void addAllEntriesToTable(List<ParsedEntry> entries) {
@@ -252,6 +278,11 @@ public class EntryTableFrame extends javax.swing.JFrame {
         setTitle("Budge - Table View");
 
         table.setFont(new java.awt.Font("Lucida Sans Typewriter", 0, 12)); // NOI18N
+        table.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                tableMousePressed(evt);
+            }
+        });
         tableScrollPane.setViewportView(table);
 
         filterLbl.setFont(new java.awt.Font("Lucida Grande", 0, 16)); // NOI18N
@@ -479,6 +510,31 @@ public class EntryTableFrame extends javax.swing.JFrame {
     private void clearFilterButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearFilterButtonActionPerformed
         clearFilter();
     }//GEN-LAST:event_clearFilterButtonActionPerformed
+
+    private void tableMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tableMousePressed
+        if (evt.getClickCount() == 2) {
+            editRows(table.getSelectedRows());
+        }
+        if (evt.isPopupTrigger()) {
+            JPopupMenu popup = createContextMenu(table.getSelectedRows().length);
+            popup.show(evt.getComponent(), evt.getX(), evt.getY());
+        }
+    }//GEN-LAST:event_tableMousePressed
+
+    /**
+     * Returns the base popup menu
+     *
+     * @param rows, the number of rows selected
+     * @return the base popup menu
+     */
+    private JPopupMenu createContextMenu(int rows) {
+        JPopupMenu popup = new JPopupMenu();
+        JMenuItem item;
+
+        popup.add(item = new JMenuItem(rows > 1 ? "Edit Entries" : "Edit Entry"));
+        item.addActionListener(menuListener);
+        return popup;
+    }
 
     /**
      * @param args the command line arguments

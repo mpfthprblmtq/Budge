@@ -18,6 +18,7 @@ public class Main {
     static RulesService rulesService;
     static AccountService accountService;
     static DialogService dialogService;
+    static BackupService backupService;
     
     public static void main(String[] args) {
         entryService = new EntryService();
@@ -25,6 +26,7 @@ public class Main {
         accountService = new AccountService();
         statementParsingService = new StatementParsingService();
         dialogService = new DialogService();
+        backupService = new BackupService();
 
         frame = new Frame();
         entryTableFrame = new EntryTableFrame();
@@ -82,6 +84,10 @@ public class Main {
 
     public static DialogService getDialogService() {
         return dialogService;
+    }
+
+    public static BackupService getBackupService() {
+        return backupService;
     }
     
 }

@@ -11,6 +11,7 @@ import budge.utils.Utils;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -141,6 +142,7 @@ public class Frame extends javax.swing.JFrame {
         reprocessButton = new javax.swing.JButton();
         jMenuBar1 = new javax.swing.JMenuBar();
         fileMenu = new javax.swing.JMenu();
+        backupMenuItem = new javax.swing.JMenuItem();
         rulesMenu = new javax.swing.JMenu();
         openRulesEditorItem = new javax.swing.JMenuItem();
         entriesMenu = new javax.swing.JMenu();
@@ -213,6 +215,15 @@ public class Frame extends javax.swing.JFrame {
         });
 
         fileMenu.setText("File");
+
+        backupMenuItem.setText("Backup");
+        backupMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                backupMenuItemActionPerformed(evt);
+            }
+        });
+        fileMenu.add(backupMenuItem);
+
         jMenuBar1.add(fileMenu);
 
         rulesMenu.setText("Rules");
@@ -338,12 +349,21 @@ public class Frame extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_clearAllEntriesMenuItemActionPerformed
 
+    private void backupMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_backupMenuItemActionPerformed
+        try {
+            Main.getBackupService().backup();
+        } catch (IOException e) {
+            updateConsole(e.getMessage());
+        }
+    }//GEN-LAST:event_backupMenuItemActionPerformed
+
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {}
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenuItem backupMenuItem;
     private javax.swing.JMenuItem clearAllEntriesMenuItem;
     private javax.swing.JButton clearButton;
     private javax.swing.JButton downloadButton;

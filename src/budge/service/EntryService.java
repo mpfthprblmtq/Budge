@@ -114,12 +114,7 @@ public class EntryService {
             boolean dateMatches = entry.getDate().before(Utils.formatDate(dateTo)) && entry.getDate().after(Utils.formatDate(dateFrom));
 
             // description
-            String descriptionToCheck;
-            if (StringUtils.isEmpty(entry.getParsedDescription())) {
-                descriptionToCheck = entry.getDescription();
-            } else {
-                descriptionToCheck = entry.getParsedDescription();
-            }
+            String descriptionToCheck = entry.getDescription();
             boolean descriptionMatches = StringUtils.contains(descriptionToCheck, description);
 
             // type

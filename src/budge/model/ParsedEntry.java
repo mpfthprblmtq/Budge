@@ -7,7 +7,6 @@ import budge.utils.Utils;
 public class ParsedEntry extends Entry implements Cloneable {
 
     private Category category;
-    private String parsedDescription;
     private String parsedAmount;
     private String notes;
     private boolean parsed;
@@ -26,11 +25,7 @@ public class ParsedEntry extends Entry implements Cloneable {
         this.setCheck(data[3]);
         this.setType(Type.fromString(data[4]));
         this.setMethod(Method.fromString(data[5]));
-        if (this.isParsed()) {
-            this.setParsedDescription(data[6]);
-        } else {
-            this.setDescription(data[6]);
-        }
+        this.setDescription(data[6]);
         this.setTransactionDate(Utils.formatDate(data[7]));
         this.setId(data[8]);
         this.setCard(Utils.isEmpty(data[9]) ? null : Integer.valueOf(data[9]));
@@ -48,14 +43,6 @@ public class ParsedEntry extends Entry implements Cloneable {
 
     public void setCategory(Category category) {
         this.category = category;
-    }
-
-    public String getParsedDescription() {
-        return parsedDescription;
-    }
-
-    public void setParsedDescription(String parsedDescription) {
-        this.parsedDescription = parsedDescription;
     }
 
     public String getNotes() {
@@ -100,9 +87,7 @@ public class ParsedEntry extends Entry implements Cloneable {
                 .concat(Constants.COMMA)
                 .concat(super.getMethod() == null ? StringUtils.EMPTY : super.getMethod().getMethod())
                 .concat(Constants.COMMA)
-                .concat(Utils.isEmpty(parsedDescription) ?
-                        (StringUtils.isEmpty(super.getDescription()) ?
-                                StringUtils.EMPTY : super.getDescription()) : parsedDescription)
+                .concat(super.getDescription())
                 .concat(Constants.COMMA)
                 .concat(Utils.formatDateSimple(super.getTransactionDate()))
                 .concat(Constants.COMMA)

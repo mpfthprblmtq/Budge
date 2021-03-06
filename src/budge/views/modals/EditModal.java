@@ -74,8 +74,7 @@ public class EditModal extends javax.swing.JFrame {
             amountTextField.setText(entry.getParsedAmount());
             categoryComboBox.setSelectedItem(entry.getCategory() != null ?
                     entry.getCategory().getCategory() : null);
-            descriptionTextArea.setText(StringUtils.isEmpty(entry.getParsedDescription()) ?
-                    entry.getDescription() : entry.getParsedDescription());
+            descriptionTextArea.setText(entry.getDescription());
             notesTextArea.setText(entry.getNotes());
             checkTextField.setText(entry.getCheck());
             idTextField.setText(entry.getId());
@@ -150,7 +149,7 @@ public class EditModal extends javax.swing.JFrame {
             categoryComboBox.setSelectedItem(allMatch ? category.getCategory() : StringUtils.EMPTY);
 
             allMatch = true;
-            String description = first.getParsedDescription();
+            String description = first.getDescription();
             for (int i = 1; i < entriesList.size(); i++) {
                 if (description != null &&
                         !description.equals(entriesList.get(i).getDescription())) {
@@ -261,7 +260,7 @@ public class EditModal extends javax.swing.JFrame {
             if (categoryComboBox.getSelectedItem() != null) {
                 entry.setCategory(Category.fromString(categoryComboBox.getSelectedItem().toString()));
             }
-            entry.setParsedDescription(descriptionTextArea.getText());
+            entry.setDescription(descriptionTextArea.getText());
             entry.setNotes(notesTextArea.getText());
             entry.setParsed(parsedCheckBox.isSelected());
         }

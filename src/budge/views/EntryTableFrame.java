@@ -103,7 +103,7 @@ public class EntryTableFrame extends javax.swing.JFrame {
                     entry.getTransactionDate() == null ?
                             Utils.formatDate(entry.getDate()) : Utils.formatDate(entry.getTransactionDate()),
                     entry.getType() != null ? entry.getType().getType() : StringUtils.EMPTY,
-                    entry.getParsedDescription() == null ? entry.getDescription() : entry.getParsedDescription(),
+                    entry.getDescription() == null ? entry.getDescription() : entry.getDescription(),
                     Utils.formatDoubleForCurrency(Double.valueOf(entry.getParsedAmount())),
                     entry.getCategory() != null ? entry.getCategory().getCategory() : StringUtils.EMPTY,
                     entry.getKey()
@@ -149,8 +149,8 @@ public class EntryTableFrame extends javax.swing.JFrame {
             model.setValueAt(entry.isParsed() ?
                     new ImageIcon(this.getClass().getResource("/resources/img/check-sm.png")) :
                     new ImageIcon(this.getClass().getResource("/resources/img/default-sm.png")), row, 0);
-            model.setValueAt(StringUtils.isEmpty(entry.getParsedDescription()) ?
-                    entry.getDescription() : entry.getParsedDescription(), row, 4);
+            model.setValueAt(StringUtils.isEmpty(entry.getDescription()) ?
+                    entry.getDescription() : entry.getDescription(), row, 4);
             model.setValueAt(entry.getCategory().getCategory(), row, 6);
         }
     }

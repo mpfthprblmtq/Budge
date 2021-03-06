@@ -165,7 +165,7 @@ public class StatementParsingService {
 //        System.out.println(Utils.formatDateSimple(entry.getDate()) + " - " + parsedDescription);
 
         // set the parsed description to the... parsed description
-        entry.setParsedDescription(parsedDescription);
+        entry.setDescription(parsedDescription);
     }
     
 }

@@ -154,14 +154,14 @@ public class RulesService {
                     } else {
                         entry.setCategory(rule.getCategory2());
                     }
-                    entry.setParsedDescription(rule.getReplaceWith());
+                    entry.setDescription(rule.getReplaceWith());
                 } else {
                     entry.setCategory(rule.getCategory());
 
                     // change the description to whatever the rule says
                     // unless it's transfer, then don't change it, we'll deal with that in another method
                     if (rule.getCategory() != Category.TRANSFER) {
-                        entry.setParsedDescription(rule.getReplaceWith());
+                        entry.setDescription(rule.getReplaceWith());
                     }
                 }
                 entry.setParsed(true);

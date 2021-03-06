@@ -6,10 +6,11 @@
 package budge.utils;
 
 import java.io.File;
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -67,6 +68,12 @@ public class Utils {
 
     public static String formatDateSimple(Date date) {
         return date != null ? SIMPLE_DATE_FORMAT.format(date) : StringUtils.EMPTY;
+    }
+
+    public static String getCurrentTimestampForFileName() {
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm");
+        LocalDateTime now = LocalDateTime.now();
+        return dtf.format(now);
     }
 
     public static boolean isEmpty(String str) {

@@ -31,10 +31,12 @@ public class Constants {
 
     public static String DATE = "Date ";
     public static String DATE_REGEX = ".*Date \\d{2}/\\d{2}/\\d{2}.*";
+    public static String SIMPLE_DATE_REGEX = "\\d{1,2}/\\d{1,2}/\\d{2,4}";
 
     public static String ID_REGEX = "(.*) \\d \\d{10} \\d \\d{4}";
     public static String ID_MATCHER_REGEX = "(.*)( \\d \\d{10} \\d \\d{4}?)";
 
+    public static final String FORMATTED_DOUBLE_REGEX = "[-]?\\d*[\\.]?[\\d]?[\\d]?";
     public static final String DOUBLE_REGEX = "\\d*\\.\\d*";
     public static final String INT_REGEX = "\\d*";
 

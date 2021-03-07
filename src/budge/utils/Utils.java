@@ -90,6 +90,21 @@ public class Utils {
         return d != null ? CURRENCY_FORMAT.format(d) : StringUtils.EMPTY;
     }
 
+    public static Double parseCurrencyDouble(String s) {
+        if (StringUtils.isEmpty(s)) {
+            return null;
+        }
+
+        boolean isNegative = s.contains("(") && s.contains(")");
+        s = s.replace("$", StringUtils.EMPTY)
+                .replace(",", StringUtils.EMPTY)
+                .replace("(", StringUtils.EMPTY)
+                .replace(")", StringUtils.EMPTY);
+        s = isNegative ? "-".concat(s) : s;
+
+        return Double.parseDouble(s);
+    }
+
     public static String formatDouble(Double d) {
         return d != null ? String.format("%.2f", d) : StringUtils.EMPTY;
     }

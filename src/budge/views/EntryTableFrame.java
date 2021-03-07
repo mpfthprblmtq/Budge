@@ -281,7 +281,7 @@ public class EntryTableFrame extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Budge - Table View");
 
-        table.setFont(new java.awt.Font("Lucida Sans Typewriter", 0, 12)); // NOI18N
+        table.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         table.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 tableMousePressed(evt);

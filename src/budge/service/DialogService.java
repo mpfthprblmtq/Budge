@@ -20,4 +20,13 @@ public class DialogService {
                 JOptionPane.ERROR_MESSAGE,
                 budgeIcon);
     }
+
+    public void showDialog(String title, String message, Component component) {
+        JOptionPane.showMessageDialog(
+                component,
+                message,
+                title,
+                JOptionPane.PLAIN_MESSAGE
+        );
+    }
 }

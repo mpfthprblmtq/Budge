@@ -212,6 +212,13 @@ public class EditModal extends javax.swing.JFrame {
     }
 
     private void submitFields() {
+        // validate to check if the description field has a comma in it, which is a no no
+        if (descriptionTextArea.getText().contains(Constants.COMMA)) {
+            errorLabel.setForeground(Constants.ERROR);
+            errorLabel.setText("Invalid Char: \",\"");
+            return;
+        }
+
         List<ParsedEntry> entriesList = new ArrayList<>(entries.values());
         List<ParsedEntry> initialEntries = new ArrayList<>();
         for (ParsedEntry entry : entriesList) {
@@ -282,9 +289,11 @@ public class EditModal extends javax.swing.JFrame {
         endingBalanceTextField = new javax.swing.JTextField();
         parsedCheckBox = new javax.swing.JCheckBox();
         submitButton = new javax.swing.JButton();
+        errorLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Budge - Edit Item(s)");
+        setResizable(false);
 
         accountLbl.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
         accountLbl.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
@@ -434,6 +443,10 @@ public class EditModal extends javax.swing.JFrame {
             }
         });
 
+        errorLabel.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
+        errorLabel.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        errorLabel.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -454,7 +467,8 @@ public class EditModal extends javax.swing.JFrame {
                     .addComponent(typeLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(categoryLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(descriptionLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jLabel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
@@ -510,8 +524,11 @@ public class EditModal extends javax.swing.JFrame {
                     .addComponent(categoryLbl)
                     .addComponent(categoryComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(descriptionLbl)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(descriptionLbl)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addComponent(descriptionScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -574,6 +591,7 @@ public class EditModal extends javax.swing.JFrame {
     private javax.swing.JScrollPane descriptionScrollPane;
     private javax.swing.JTextArea descriptionTextArea;
     private javax.swing.JTextField endingBalanceTextField;
+    private javax.swing.JLabel errorLabel;
     private javax.swing.JTextField idTextField;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;

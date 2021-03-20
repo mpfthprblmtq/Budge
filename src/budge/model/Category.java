@@ -9,7 +9,7 @@ public enum Category {
     ENTERTAINMENT ("Entertainment"),
     GROCERIES ("Groceries"),
     HOME_SUPPLIES ("Home Supplies"),
-    LIFE_SUPPLIES ("Life Supplies"),
+    HUMAN_MAINTENANCE ("Human Maintenance"),
     GROCERIES_HOME_SUPPLIES ("Groceries/Home Supplies"),
     PET_STUFF ("Pet Stuff"),
     MISCELLANEOUS ("Miscellaneous"),
@@ -23,9 +23,11 @@ public enum Category {
     CREDIT_CARD_PAYMENT ("Credit Card Payment"),
     CAR_STUFF ("Car Stuff"),
     VACATION ("Vacation"),
-    ATM ("ATM");
+    ATM ("ATM"),
+    UTILITIES_BILLS("Utilities/Bills"),
+    TAXES("Taxes");
 
-    private String category;
+    private final String category;
 
     Category(String category) {
         this.category = category;

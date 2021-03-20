@@ -65,6 +65,15 @@ public class Entry {
             this.endingBalance = Double.valueOf(line.get(Constants.ENDING_BALANCE_COL));
         }
 
+        // case where we don't have the information, infer it from the amount of credit/debit
+        // this happens with checks
+        if (this.type == null) {
+            if (debit == null && credit != null) {
+                this.type = Type.DEPOSIT;
+            } else if (debit != null && credit == null) {
+                this.type = Type.WITHDRAWAL;
+            }
+        }
 
         this.setKey(new EntryKey(this));
     }

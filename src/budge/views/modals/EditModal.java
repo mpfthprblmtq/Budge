@@ -71,20 +71,22 @@ public class EditModal extends javax.swing.JFrame {
             accountTextField.setText(entry.getAccount());
             transactionDateTextField.setText(Utils.formatDate(entry.getTransactionDate()));
             postDateTextField.setText(Utils.formatDate(entry.getDate()));
-            typeTextField.setText(entry.getType().toString());
+            typeTextField.setText(entry.getType() != null ?
+                    entry.getType().toString() : StringUtils.EMPTY);
             amountTextField.setText(entry.getParsedAmount());
             categoryComboBox.setSelectedItem(entry.getCategory() != null ?
-                    entry.getCategory().getCategory() : null);
+                    entry.getCategory().getCategory() : StringUtils.EMPTY);
             descriptionTextArea.setText(entry.getDescription());
             notesTextArea.setText(entry.getNotes());
             checkTextField.setText(entry.getCheck());
             idTextField.setText(entry.getId());
-            debitCardTextField.setText(entry.getCard() == null ?
-                    StringUtils.EMPTY : entry.getCard().toString());
-            merchantCodeTextField.setText(entry.getMerchantCode() == null ?
-                    StringUtils.EMPTY : entry.getMerchantCode().toString());
+            debitCardTextField.setText(entry.getCard() != null ?
+                    entry.getCard().toString() : StringUtils.EMPTY );
+            merchantCodeTextField.setText(entry.getMerchantCode() != null ?
+                    entry.getMerchantCode().toString() : StringUtils.EMPTY);
             statusTextField.setText(entry.getStatus());
-            endingBalanceTextField.setText(entry.getEndingBalance().toString());
+            endingBalanceTextField.setText(entry.getEndingBalance() != null ?
+                    entry.getEndingBalance().toString() : StringUtils.EMPTY);
             parsedCheckBox.setSelected(entry.isParsed());
         } else {
 

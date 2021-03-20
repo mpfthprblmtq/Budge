@@ -30,6 +30,16 @@ public class EntryTableFrame extends javax.swing.JFrame {
 
     // some graphics ivars
     ActionListener menuListener;        // listener for the popup menu objects
+    EditModal editModal;
+
+    // filter ivars (with default values)
+    String account = Constants.ANY;
+    String dateTo = StringUtils.EMPTY;
+    String dateFrom = StringUtils.EMPTY;
+    String description = StringUtils.EMPTY;
+    String type = Constants.ANY;
+    String parsedString = Constants.ANY;
+    String category = Constants.ANY;
 
     // table model used, with some customizations and overrides
     DefaultTableModel model = new DefaultTableModel() {
@@ -167,7 +177,7 @@ public class EntryTableFrame extends javax.swing.JFrame {
                 entries.put(row, entry);
             }
         }
-        EditModal editModal = new EditModal(entries);
+        editModal = new EditModal(entries);
         editModal.setLocation(this.getX() + this.getWidth() + 10, this.getY());
         editModal.setVisible(true);
     }
@@ -187,40 +197,57 @@ public class EntryTableFrame extends javax.swing.JFrame {
 
     /**
      * Filters based on the criteria given
-     * @param account
-     * @param dateFrom
-     * @param dateTo
-     * @param description
-     * @param parsedString
-     * @param category
      */
-    private void filter(
-            String account, String dateFrom, String dateTo, String description, String type, String parsedString, String category) {
-        Boolean parsed;
-        if (account.equals("All")) {
-            account = StringUtils.EMPTY;
+    private void filter() {
+        if (validateFields()) {
+
+            Boolean parsed;
+            if (account.equals(Constants.ANY)) {
+                account = StringUtils.EMPTY;
+            }
+            if (StringUtils.isEmpty(dateFrom)) {
+                dateFrom = "01/01/1970";
+            }
+            if (StringUtils.isEmpty(dateTo)) {
+                dateTo = "01/01/2070";
+            }
+            if (type.equals(Constants.ANY)) {
+                type = StringUtils.EMPTY;
+            }
+            if (parsedString.equals(Constants.ANY)) {
+                parsed = null;
+            } else {
+                parsed = parsedString.equals("Parsed");
+            }
+            if (category.equals(Constants.ANY)) {
+                category = StringUtils.EMPTY;
+            }
+            List<ParsedEntry> filteredEntries = entryService.filter(account, dateFrom, dateTo, description, type, parsed, category);
+            filteredEntries.sort(Comparator.comparing(Entry::getDate));
+            model.setRowCount(0);
+            addAllEntriesToTable(filteredEntries);
         }
-        if (StringUtils.isEmpty(dateFrom)) {
-            dateFrom = "01/01/1970";
+    }
+
+    private boolean validateFields() {
+        boolean fieldsValid = true;
+        if (StringUtils.isNotEmpty(dateFrom) && StringUtils.isNotEmpty(dateTo)) {
+            if (!dateFrom.matches(Constants.SIMPLE_DATE_REGEX)) {
+                statusLabel.setText("Invalid date format in Date To field!  ");
+                fieldsValid = false;
+            }
+            if (!dateTo.matches(Constants.SIMPLE_DATE_REGEX)) {
+                statusLabel.setText("Invalid date format in Date From field!  ");
+                fieldsValid = false;
+            }
+        } else if (StringUtils.isEmpty(dateFrom) && StringUtils.isNotEmpty(dateTo)) {
+            statusLabel.setText("Need a Date To field!");
+            fieldsValid = false;
+        } else if (StringUtils.isNotEmpty(dateFrom) && StringUtils.isEmpty(dateTo)) {
+            statusLabel.setText("Need a Date From field!");
+            fieldsValid = false;
         }
-        if (StringUtils.isEmpty(dateTo)) {
-            dateTo = "01/01/2070";
-        }
-        if (type.equals(Constants.ANY)) {
-            type = StringUtils.EMPTY;
-        }
-        if (parsedString.equals(Constants.ANY)) {
-            parsed = null;
-        } else {
-            parsed = parsedString.equals("Parsed");
-        }
-        if (category.equals(Constants.ANY)) {
-            category = StringUtils.EMPTY;
-        }
-        List<ParsedEntry> filteredEntries = entryService.filter(account, dateFrom, dateTo, description, type, parsed, category);
-        filteredEntries.sort(Comparator.comparing(Entry::getDate));
-        model.setRowCount(0);
-        addAllEntriesToTable(filteredEntries);
+        return fieldsValid;
     }
 
     private void clearFilter() {
@@ -230,12 +257,18 @@ public class EntryTableFrame extends javax.swing.JFrame {
     }
 
     private void clear() {
-        accountComboBox.setSelectedItem("All");
+        accountComboBox.setSelectedItem(Constants.ANY);
         dateToField.setText(StringUtils.EMPTY);
         dateFromField.setText(StringUtils.EMPTY);
         descriptionTextField.setText(StringUtils.EMPTY);
-        parsedComboBox.setSelectedItem("Any");
-        categoryComboBox.setSelectedItem(StringUtils.EMPTY);
+        parsedComboBox.setSelectedItem(Constants.ANY);
+        categoryComboBox.setSelectedItem(Constants.ANY);
+        byYear2019MenuItem.setSelected(false);
+        byYear2020MenuItem.setSelected(false);
+        byYear2021MenuItem.setSelected(false);
+        byGroupAimeeMenuItem.setSelected(false);
+        byGroupPatMenuItem.setSelected(false);
+        byGroupJointMenuItem.setSelected(false);
     }
 
     /**
@@ -277,9 +310,24 @@ public class EntryTableFrame extends javax.swing.JFrame {
         exitMenuItem = new javax.swing.JMenuItem();
         editMenu = new javax.swing.JMenu();
         editRowsMenuItem = new javax.swing.JMenuItem();
+        advancedFilterMenu = new javax.swing.JMenu();
+        byYearFilterMenuItem = new javax.swing.JMenu();
+        byYear2019MenuItem = new javax.swing.JMenuItem();
+        byYear2020MenuItem = new javax.swing.JMenuItem();
+        byYear2021MenuItem = new javax.swing.JMenuItem();
+        byGroupFilterMenuItem = new javax.swing.JMenu();
+        byGroupAimeeMenuItem = new javax.swing.JCheckBoxMenuItem();
+        byGroupPatMenuItem = new javax.swing.JCheckBoxMenuItem();
+        byGroupJointMenuItem = new javax.swing.JCheckBoxMenuItem();
+        clearAdvancedFiltersMenuItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Budge - Table View");
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosed(java.awt.event.WindowEvent evt) {
+                formWindowClosed(evt);
+            }
+        });
 
         table.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         table.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -303,8 +351,36 @@ public class EntryTableFrame extends javax.swing.JFrame {
         categoryLbl.setText("Category:");
 
         accountComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "All", "Pat's Checking", "Pat's Savings", "Aimee's Checking", "Aimee's Savings", "Joint Checking", "Joint Savings" }));
+        accountComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                accountComboBoxActionPerformed(evt);
+            }
+        });
+
+        dateFromField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                dateFromFieldKeyReleased(evt);
+            }
+        });
+
+        dateToField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                dateToFieldKeyReleased(evt);
+            }
+        });
+
+        descriptionTextField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                descriptionTextFieldKeyReleased(evt);
+            }
+        });
 
         categoryComboBox.setModel(FormUtils.initCategoryComboBox(Constants.ANY));
+        categoryComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                categoryComboBoxActionPerformed(evt);
+            }
+        });
 
         filterButton.setText("Filter");
         filterButton.addActionListener(new java.awt.event.ActionListener() {
@@ -331,10 +407,20 @@ public class EntryTableFrame extends javax.swing.JFrame {
         });
 
         parsedComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Any", "Parsed", "Not Parsed" }));
+        parsedComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                parsedComboBoxActionPerformed(evt);
+            }
+        });
 
         typeLbl.setText("Type:");
 
         typeComboBox.setModel(FormUtils.initTransactionTypeComboBox());
+        typeComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                typeComboBoxActionPerformed(evt);
+            }
+        });
 
         jSeparator5.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
@@ -363,6 +449,74 @@ public class EntryTableFrame extends javax.swing.JFrame {
         editMenu.add(editRowsMenuItem);
 
         menuBar.add(editMenu);
+
+        advancedFilterMenu.setText("Advanced Filters");
+
+        byYearFilterMenuItem.setText("By Year...");
+
+        byYear2019MenuItem.setText("2019");
+        byYear2019MenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                byYear2019MenuItemActionPerformed(evt);
+            }
+        });
+        byYearFilterMenuItem.add(byYear2019MenuItem);
+
+        byYear2020MenuItem.setText("2020");
+        byYear2020MenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                byYear2020MenuItemActionPerformed(evt);
+            }
+        });
+        byYearFilterMenuItem.add(byYear2020MenuItem);
+
+        byYear2021MenuItem.setText("2021");
+        byYear2021MenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                byYear2021MenuItemActionPerformed(evt);
+            }
+        });
+        byYearFilterMenuItem.add(byYear2021MenuItem);
+
+        advancedFilterMenu.add(byYearFilterMenuItem);
+
+        byGroupFilterMenuItem.setText("By Group...");
+
+        byGroupAimeeMenuItem.setText("Aimee");
+        byGroupAimeeMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                byGroupAimeeMenuItemActionPerformed(evt);
+            }
+        });
+        byGroupFilterMenuItem.add(byGroupAimeeMenuItem);
+
+        byGroupPatMenuItem.setText("Pat");
+        byGroupPatMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                byGroupPatMenuItemActionPerformed(evt);
+            }
+        });
+        byGroupFilterMenuItem.add(byGroupPatMenuItem);
+
+        byGroupJointMenuItem.setText("Joint");
+        byGroupJointMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                byGroupJointMenuItemActionPerformed(evt);
+            }
+        });
+        byGroupFilterMenuItem.add(byGroupJointMenuItem);
+
+        advancedFilterMenu.add(byGroupFilterMenuItem);
+
+        clearAdvancedFiltersMenuItem.setText("Clear Above Filters");
+        clearAdvancedFiltersMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clearAdvancedFiltersMenuItemActionPerformed(evt);
+            }
+        });
+        advancedFilterMenu.add(clearAdvancedFiltersMenuItem);
+
+        menuBar.add(advancedFilterMenu);
 
         setJMenuBar(menuBar);
 
@@ -496,15 +650,7 @@ public class EntryTableFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_editRowsMenuItemActionPerformed
 
     private void filterButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filterButtonActionPerformed
-        filter(
-                accountComboBox.getSelectedItem() != null ? accountComboBox.getSelectedItem().toString() : null,
-                dateFromField.getText(),
-                dateToField.getText(),
-                descriptionTextField.getText(),
-                typeComboBox.getSelectedItem() != null ? typeComboBox.getSelectedItem().toString() : null,
-                parsedComboBox.getSelectedItem() != null ? parsedComboBox.getSelectedItem().toString() : null,
-                categoryComboBox.getSelectedItem() != null ? categoryComboBox.getSelectedItem().toString() : null
-        );
+       filter();
     }//GEN-LAST:event_filterButtonActionPerformed
 
     private void exitMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exitMenuItemActionPerformed
@@ -524,6 +670,98 @@ public class EntryTableFrame extends javax.swing.JFrame {
             popup.show(evt.getComponent(), evt.getX(), evt.getY());
         }
     }//GEN-LAST:event_tableMousePressed
+
+    private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
+        if (editModal != null) {
+            editModal.dispose();
+        }
+        clear();
+    }//GEN-LAST:event_formWindowClosed
+
+    private void byYear2019MenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_byYear2019MenuItemActionPerformed
+        dateFrom = "1/1/19";
+        dateTo = "12/31/19";
+        dateFromField.setText(dateFrom);
+        dateToField.setText(dateTo);
+        filter();
+    }//GEN-LAST:event_byYear2019MenuItemActionPerformed
+
+    private void byYear2020MenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_byYear2020MenuItemActionPerformed
+        dateFrom = "1/1/20";
+        dateTo = "12/31/20";
+        dateFromField.setText(dateFrom);
+        dateToField.setText(dateTo);
+        filter();
+    }//GEN-LAST:event_byYear2020MenuItemActionPerformed
+
+    private void byYear2021MenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_byYear2021MenuItemActionPerformed
+        dateFrom = "1/1/21";
+        dateTo = "12/31/21";
+        dateFromField.setText(dateFrom);
+        dateToField.setText(dateTo);
+        filter();
+    }//GEN-LAST:event_byYear2021MenuItemActionPerformed
+
+    private void byGroupAimeeMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_byGroupAimeeMenuItemActionPerformed
+        if (byGroupAimeeMenuItem.isSelected()) {
+            account = "Aimee";
+        } else {
+            account = StringUtils.EMPTY;
+        }
+        filter();
+    }//GEN-LAST:event_byGroupAimeeMenuItemActionPerformed
+
+    private void byGroupPatMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_byGroupPatMenuItemActionPerformed
+        if (byGroupPatMenuItem.isSelected()) {
+            account = "Pat";
+        } else {
+            account = StringUtils.EMPTY;
+        }
+        filter();
+    }//GEN-LAST:event_byGroupPatMenuItemActionPerformed
+
+    private void byGroupJointMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_byGroupJointMenuItemActionPerformed
+        if (byGroupJointMenuItem.isSelected()) {
+            account = "Joint";
+        } else {
+            account = StringUtils.EMPTY;
+        }
+        filter();
+    }//GEN-LAST:event_byGroupJointMenuItemActionPerformed
+
+    private void clearAdvancedFiltersMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearAdvancedFiltersMenuItemActionPerformed
+        byGroupAimeeMenuItem.setSelected(false);
+        byGroupPatMenuItem.setSelected(false);
+        byGroupJointMenuItem.setSelected(false);
+    }//GEN-LAST:event_clearAdvancedFiltersMenuItemActionPerformed
+
+    private void accountComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_accountComboBoxActionPerformed
+        account = accountComboBox.getSelectedItem() != null ? accountComboBox.getSelectedItem().toString() : StringUtils.EMPTY;
+    }//GEN-LAST:event_accountComboBoxActionPerformed
+
+    private void dateFromFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_dateFromFieldKeyReleased
+        dateFrom = dateFromField.getText();
+    }//GEN-LAST:event_dateFromFieldKeyReleased
+
+    private void dateToFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_dateToFieldKeyReleased
+        dateTo = dateToField.getText();
+    }//GEN-LAST:event_dateToFieldKeyReleased
+
+    private void descriptionTextFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_descriptionTextFieldKeyReleased
+        description = descriptionTextField.getText();
+    }//GEN-LAST:event_descriptionTextFieldKeyReleased
+
+    private void typeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_typeComboBoxActionPerformed
+        type = typeComboBox.getSelectedItem() != null ? typeComboBox.getSelectedItem().toString() : StringUtils.EMPTY;
+    }//GEN-LAST:event_typeComboBoxActionPerformed
+
+    private void parsedComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_parsedComboBoxActionPerformed
+        parsedString = parsedComboBox.getSelectedItem() != null ? parsedComboBox.getSelectedItem().toString() : StringUtils.EMPTY;
+    }//GEN-LAST:event_parsedComboBoxActionPerformed
+
+    private void categoryComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_categoryComboBoxActionPerformed
+        category = categoryComboBox.getSelectedItem() != null ? categoryComboBox.getSelectedItem().toString() : StringUtils.EMPTY;
+    }//GEN-LAST:event_categoryComboBoxActionPerformed
 
     /**
      * Returns the base popup menu
@@ -550,8 +788,18 @@ public class EntryTableFrame extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> accountComboBox;
     private javax.swing.JLabel accountLbl;
+    private javax.swing.JMenu advancedFilterMenu;
+    private javax.swing.JCheckBoxMenuItem byGroupAimeeMenuItem;
+    private javax.swing.JMenu byGroupFilterMenuItem;
+    private javax.swing.JCheckBoxMenuItem byGroupJointMenuItem;
+    private javax.swing.JCheckBoxMenuItem byGroupPatMenuItem;
+    private javax.swing.JMenuItem byYear2019MenuItem;
+    private javax.swing.JMenuItem byYear2020MenuItem;
+    private javax.swing.JMenuItem byYear2021MenuItem;
+    private javax.swing.JMenu byYearFilterMenuItem;
     private javax.swing.JComboBox<String> categoryComboBox;
     private javax.swing.JLabel categoryLbl;
+    private javax.swing.JMenuItem clearAdvancedFiltersMenuItem;
     private javax.swing.JButton clearFilterButton;
     private javax.swing.JTextField dateFromField;
     private javax.swing.JLabel dateLbl;

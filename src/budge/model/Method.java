@@ -5,7 +5,8 @@ public enum Method {
     ACH ("ACH"),
     DEBIT_CARD ("Debit Card"),
     DEBIT_CARD_FEE ("Debit Card Fee"),
-    HOME_BANKING_TRANSFER ("Home Banking Transfer");
+    HOME_BANKING_TRANSFER ("Home Banking Transfer"),
+    CHECK ("Check");
 
     private final String method;
 

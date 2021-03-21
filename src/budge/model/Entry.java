@@ -74,6 +74,10 @@ public class Entry {
                 this.type = Type.WITHDRAWAL;
             }
         }
+        // now add a method of "Check"
+        if (this.method == null) {
+            this.method = Method.CHECK;
+        }
 
         this.setKey(new EntryKey(this));
     }

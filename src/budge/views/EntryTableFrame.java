@@ -358,7 +358,7 @@ public class EntryTableFrame extends javax.swing.JFrame {
 
         categoryLbl.setText("Category:");
 
-        accountComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "All", "Pat's Checking", "Pat's Savings", "Aimee's Checking", "Aimee's Savings", "Joint Checking", "Joint Savings" }));
+        accountComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Any", "Pat's Checking", "Pat's Savings", "Aimee's Checking", "Aimee's Savings", "Joint Checking", "Joint Savings" }));
         accountComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 accountComboBoxActionPerformed(evt);

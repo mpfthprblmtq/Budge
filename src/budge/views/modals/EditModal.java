@@ -13,7 +13,6 @@ import budge.utils.Constants;
 import budge.utils.FormUtils;
 import budge.utils.StringUtils;
 import budge.utils.Utils;
-import budge.views.EntryTableFrame;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -29,31 +28,42 @@ public class EditModal extends javax.swing.JFrame {
 
     // globals
     Map<Integer, ParsedEntry> entries;
+    String initialCategory;
+    String initialDescription;
+    String initialNotes;
 
     // service
     EntryService entryService = Main.getEntryService();
 
-    // main table frame
-    EntryTableFrame entryTableFrame = Main.getEntryTableFrame();
-
     /**
      * Creates new form EditModal
-     * @param entries
+     * @param entriesToEdit, the entries to edit
      */
-    public EditModal(Map<Integer, ParsedEntry> entries) {
+    public EditModal(Map<Integer, ParsedEntry> entriesToEdit) {
         // init the components
         // checks if we're in the EDT to prevent NoSuchElementExceptions and ArrayIndexOutOfBoundsExceptions
         if (SwingUtilities.isEventDispatchThread()) {
             initComponents();
-            populateFields(entries);
+            populateFields(entriesToEdit);
+            init();
         } else {
             SwingUtilities.invokeLater(() -> {
                 initComponents();
-                populateFields(entries);
+                populateFields(entriesToEdit);
+                init();
             });
         }
     }
-    
+
+    /**
+     * Does some more init stuff
+     */
+    private void init() {
+        initialCategory = categoryComboBox.getSelectedItem() != null ? categoryComboBox.getSelectedItem().toString() : StringUtils.EMPTY;
+        initialDescription = descriptionTextArea.getText();
+        initialNotes = notesTextArea.getText();
+    }
+
     /**
      * Populates the fields on the form
      */
@@ -403,12 +413,22 @@ public class EditModal extends javax.swing.JFrame {
 
         categoryComboBox.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
         categoryComboBox.setModel(FormUtils.initCategoryComboBox(StringUtils.EMPTY));
+        categoryComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                categoryComboBoxActionPerformed(evt);
+            }
+        });
 
         descriptionTextArea.setColumns(20);
         descriptionTextArea.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
         descriptionTextArea.setLineWrap(true);
         descriptionTextArea.setRows(5);
         descriptionTextArea.setWrapStyleWord(true);
+        descriptionTextArea.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                descriptionTextAreaKeyReleased(evt);
+            }
+        });
         descriptionScrollPane.setViewportView(descriptionTextArea);
 
         notesTextArea.setColumns(20);
@@ -416,6 +436,11 @@ public class EditModal extends javax.swing.JFrame {
         notesTextArea.setLineWrap(true);
         notesTextArea.setRows(5);
         notesTextArea.setWrapStyleWord(true);
+        notesTextArea.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                notesTextAreaKeyReleased(evt);
+            }
+        });
         notesScrollpane.setViewportView(notesTextArea);
 
         checkTextField.setEditable(false);
@@ -597,6 +622,31 @@ public class EditModal extends javax.swing.JFrame {
     private void submitButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_submitButtonActionPerformed
         submitFields();
     }//GEN-LAST:event_submitButtonActionPerformed
+
+    private void categoryComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_categoryComboBoxActionPerformed
+        if (initialCategory != null) {
+            if (!initialCategory.equals(categoryComboBox.getSelectedItem() != null ? categoryComboBox.getSelectedItem().toString() : StringUtils.EMPTY) &&
+                    !parsedCheckBox.isSelected()) {
+                parsedCheckBox.setSelected(true);
+            }
+        }
+    }//GEN-LAST:event_categoryComboBoxActionPerformed
+
+    private void descriptionTextAreaKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_descriptionTextAreaKeyReleased
+        if (initialDescription != null) {
+            if (!initialDescription.equals(descriptionTextArea.getText()) && !parsedCheckBox.isSelected()) {
+                parsedCheckBox.setSelected(true);
+            }
+        }
+    }//GEN-LAST:event_descriptionTextAreaKeyReleased
+
+    private void notesTextAreaKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_notesTextAreaKeyReleased
+        if (initialNotes != null) {
+            if (!initialNotes.equals(notesTextArea.getText()) & !parsedCheckBox.isSelected()) {
+                parsedCheckBox.setSelected(true);
+            }
+        }
+    }//GEN-LAST:event_notesTextAreaKeyReleased
 
     /**
      * @param args the command line arguments

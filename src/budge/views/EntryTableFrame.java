@@ -177,6 +177,13 @@ public class EntryTableFrame extends javax.swing.JFrame {
                 entries.put(row, entry);
             }
         }
+
+        // check to see if we have an edit modal open already, close that if so
+        if (editModal != null) {
+            editModal.dispose();
+        }
+
+        // then display a new one
         editModal = new EditModal(entries);
         editModal.setLocation(this.getX() + this.getWidth() + 10, this.getY());
         editModal.setVisible(true);
@@ -636,11 +643,11 @@ public class EntryTableFrame extends javax.swing.JFrame {
                                 .addComponent(clearFilterButton))
                             .addComponent(statusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(tableScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 500, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(tableScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 494, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
 
         pack();

@@ -17,7 +17,6 @@ import budge.views.EntryTableFrame;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -72,7 +71,9 @@ public class EditModal extends javax.swing.JFrame {
             transactionDateTextField.setText(Utils.formatDate(entry.getTransactionDate()));
             postDateTextField.setText(Utils.formatDate(entry.getDate()));
             typeTextField.setText(entry.getType() != null ?
-                    entry.getType().toString() : StringUtils.EMPTY);
+                    entry.getType().getType() : StringUtils.EMPTY);
+            methodTextField.setText(entry.getMethod() != null ?
+                    entry.getMethod().getMethod() : StringUtils.EMPTY);
             amountTextField.setText(entry.getParsedAmount());
             categoryComboBox.setSelectedItem(entry.getCategory() != null ?
                     entry.getCategory().getCategory() : StringUtils.EMPTY);
@@ -114,6 +115,13 @@ public class EditModal extends javax.swing.JFrame {
                 types.add(entry.getType().getType());
             }
             typeTextField.setText(compareValuesInList(types));
+
+            // method
+            List<String> methods = new ArrayList<>();
+            for(ParsedEntry entry : entriesList) {
+                methods.add(entry.getMethod().toString());
+            }
+            methodTextField.setText(compareValuesInList(methods));
 
             // amount
             List<String> amounts = entriesList.stream().map(ParsedEntry::getParsedAmount).collect(Collectors.toList());
@@ -263,18 +271,20 @@ public class EditModal extends javax.swing.JFrame {
         amountLbl = new javax.swing.JLabel();
         checkLbl = new javax.swing.JLabel();
         typeLbl = new javax.swing.JLabel();
+        methodLbl = new javax.swing.JLabel();
         categoryLbl = new javax.swing.JLabel();
         descriptionLbl = new javax.swing.JLabel();
-        jLabel9 = new javax.swing.JLabel();
-        jLabel10 = new javax.swing.JLabel();
-        jLabel11 = new javax.swing.JLabel();
-        jLabel12 = new javax.swing.JLabel();
-        jLabel13 = new javax.swing.JLabel();
-        jLabel14 = new javax.swing.JLabel();
+        notesLbl = new javax.swing.JLabel();
+        idLbl = new javax.swing.JLabel();
+        debitLbl = new javax.swing.JLabel();
+        merchantCodeLbl = new javax.swing.JLabel();
+        statusLbl = new javax.swing.JLabel();
+        endingBalLbl = new javax.swing.JLabel();
         accountTextField = new javax.swing.JTextField();
         transactionDateTextField = new javax.swing.JTextField();
         postDateTextField = new javax.swing.JTextField();
         typeTextField = new javax.swing.JTextField();
+        methodTextField = new javax.swing.JTextField();
         amountTextField = new javax.swing.JTextField();
         categoryComboBox = new javax.swing.JComboBox<>();
         descriptionScrollPane = new javax.swing.JScrollPane();
@@ -319,6 +329,10 @@ public class EditModal extends javax.swing.JFrame {
         typeLbl.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
         typeLbl.setText("Type:");
 
+        methodLbl.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
+        methodLbl.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        methodLbl.setText("Method:");
+
         categoryLbl.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
         categoryLbl.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
         categoryLbl.setText("Category:");
@@ -327,29 +341,29 @@ public class EditModal extends javax.swing.JFrame {
         descriptionLbl.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
         descriptionLbl.setText("Description:");
 
-        jLabel9.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
-        jLabel9.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
-        jLabel9.setText("Notes:");
+        notesLbl.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
+        notesLbl.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        notesLbl.setText("Notes:");
 
-        jLabel10.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
-        jLabel10.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
-        jLabel10.setText("ID:");
+        idLbl.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
+        idLbl.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        idLbl.setText("ID:");
 
-        jLabel11.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
-        jLabel11.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
-        jLabel11.setText("Debit Card:");
+        debitLbl.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
+        debitLbl.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        debitLbl.setText("Debit Card:");
 
-        jLabel12.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
-        jLabel12.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
-        jLabel12.setText("Merchant Code:");
+        merchantCodeLbl.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
+        merchantCodeLbl.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        merchantCodeLbl.setText("Merchant Code:");
 
-        jLabel13.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
-        jLabel13.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
-        jLabel13.setText("Status:");
+        statusLbl.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
+        statusLbl.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        statusLbl.setText("Status:");
 
-        jLabel14.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
-        jLabel14.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
-        jLabel14.setText("Ending Balance:");
+        endingBalLbl.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
+        endingBalLbl.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        endingBalLbl.setText("Ending Balance:");
 
         accountTextField.setEditable(false);
         accountTextField.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
@@ -374,6 +388,12 @@ public class EditModal extends javax.swing.JFrame {
         typeTextField.setMaximumSize(new java.awt.Dimension(150, 26));
         typeTextField.setMinimumSize(new java.awt.Dimension(150, 26));
         typeTextField.setPreferredSize(new java.awt.Dimension(150, 26));
+
+        methodTextField.setEditable(false);
+        methodTextField.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
+        methodTextField.setMaximumSize(new java.awt.Dimension(150, 26));
+        methodTextField.setMinimumSize(new java.awt.Dimension(150, 26));
+        methodTextField.setPreferredSize(new java.awt.Dimension(150, 26));
 
         amountTextField.setEditable(false);
         amountTextField.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
@@ -454,11 +474,11 @@ public class EditModal extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(jLabel14, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel13, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel12, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel11, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel10, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(endingBalLbl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(statusLbl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(merchantCodeLbl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(debitLbl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(idLbl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(amountLbl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(accountLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(transactionDateLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -467,9 +487,10 @@ public class EditModal extends javax.swing.JFrame {
                     .addComponent(typeLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(categoryLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(descriptionLbl, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(notesLbl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(methodLbl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(parsedCheckBox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -492,7 +513,8 @@ public class EditModal extends javax.swing.JFrame {
                                 .addComponent(transactionDateTextField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(postDateTextField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(typeTextField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(amountTextField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                .addComponent(amountTextField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(methodTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -517,6 +539,10 @@ public class EditModal extends javax.swing.JFrame {
                     .addComponent(typeLbl))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(methodTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(methodLbl))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(amountLbl)
                     .addComponent(amountTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -533,30 +559,30 @@ public class EditModal extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(notesScrollpane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel9))
+                    .addComponent(notesLbl))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(checkLbl)
                     .addComponent(checkTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel10)
+                    .addComponent(idLbl)
                     .addComponent(idTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel11)
+                    .addComponent(debitLbl)
                     .addComponent(debitCardTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel12)
+                    .addComponent(merchantCodeLbl)
                     .addComponent(merchantCodeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel13)
+                    .addComponent(statusLbl)
                     .addComponent(statusTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel14)
+                    .addComponent(endingBalLbl)
                     .addComponent(endingBalanceTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -587,24 +613,26 @@ public class EditModal extends javax.swing.JFrame {
     private javax.swing.JLabel checkLbl;
     private javax.swing.JTextField checkTextField;
     private javax.swing.JTextField debitCardTextField;
+    private javax.swing.JLabel debitLbl;
     private javax.swing.JLabel descriptionLbl;
     private javax.swing.JScrollPane descriptionScrollPane;
     private javax.swing.JTextArea descriptionTextArea;
+    private javax.swing.JLabel endingBalLbl;
     private javax.swing.JTextField endingBalanceTextField;
     private javax.swing.JLabel errorLabel;
+    private javax.swing.JLabel idLbl;
     private javax.swing.JTextField idTextField;
-    private javax.swing.JLabel jLabel10;
-    private javax.swing.JLabel jLabel11;
-    private javax.swing.JLabel jLabel12;
-    private javax.swing.JLabel jLabel13;
-    private javax.swing.JLabel jLabel14;
-    private javax.swing.JLabel jLabel9;
+    private javax.swing.JLabel merchantCodeLbl;
     private javax.swing.JTextField merchantCodeTextField;
+    private javax.swing.JLabel methodLbl;
+    private javax.swing.JTextField methodTextField;
+    private javax.swing.JLabel notesLbl;
     private javax.swing.JScrollPane notesScrollpane;
     private javax.swing.JTextArea notesTextArea;
     private javax.swing.JCheckBox parsedCheckBox;
     private javax.swing.JLabel postDateLbl;
     private javax.swing.JTextField postDateTextField;
+    private javax.swing.JLabel statusLbl;
     private javax.swing.JTextField statusTextField;
     private javax.swing.JButton submitButton;
     private javax.swing.JLabel transactionDateLbl;

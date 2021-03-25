@@ -1,6 +1,7 @@
 package budge.views;
 
 import budge.Main;
+import budge.model.Entry;
 import budge.service.EntryService;
 import budge.service.StatementParsingService;
 import budge.service.DialogService;
@@ -95,6 +96,9 @@ public class Frame extends javax.swing.JFrame {
         } else {
             updateConsole(filesToProcess.size() + " files processed!");
         }
+
+        // reprocess all the entries so that it picks up the transfers
+        statementParsingService.reprocess(entryService.getEntries());
     }
     
     public void download() {
@@ -495,7 +499,7 @@ public class Frame extends javax.swing.JFrame {
     }//GEN-LAST:event_reprocessButtonActionPerformed
 
     private void clearAllEntriesMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearAllEntriesMenuItemActionPerformed
-        // TODO add your handling code here:
+        entryService.clearAllEntries();
     }//GEN-LAST:event_clearAllEntriesMenuItemActionPerformed
 
     private void backupMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_backupMenuItemActionPerformed

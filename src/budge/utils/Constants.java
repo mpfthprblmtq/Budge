@@ -40,6 +40,8 @@ public class Constants {
     public static final String DOUBLE_REGEX = "\\d*\\.\\d*";
     public static final String INT_REGEX = "\\d*";
 
+    public static final String TRANSFER_REGEX = "Transfer (to|from) (Aimee's|Pat's|Joint) (Checking|Savings).*";
+
     public static final String REQUIRED = "* Required";
     public static final String INVALID = "* Invalid";
 

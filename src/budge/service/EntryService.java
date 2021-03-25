@@ -1,6 +1,5 @@
 package budge.service;
 
-import budge.model.Category;
 import budge.model.EntryKey;
 import budge.model.ParsedEntry;
 import budge.model.Type;
@@ -73,17 +72,8 @@ public class EntryService {
      * Edits an entry
      */
     public String updateEntries(List<ParsedEntry> initialEntries, List<ParsedEntry> newEntries) {
-        Map<ParsedEntry, ParsedEntry> updateEntriesMap = new HashMap<>();
-        if (initialEntries.size() == newEntries.size()) {
-            for (int i = 0; i < initialEntries.size(); i++) {
-                updateEntriesMap.put(initialEntries.get(i), newEntries.get(i));
-            }
-        } else {
-            return "Initial and new entries lists don't match!";
-        }
-
         try {
-            entryRepository.updateEntries(updateEntriesMap);
+            entryRepository.updateEntries(initialEntries, newEntries);
             return null;
         } catch (EntryNotFoundException | IOException e) {
             return e.getMessage();
@@ -92,12 +82,12 @@ public class EntryService {
 
     /**
      * Filters all entries based on conditions given
-     * @param account
-     * @param dateFrom
-     * @param dateTo
-     * @param description
-     * @param parsed
-     * @param category
+     * @param account, the account to filter on
+     * @param dateFrom, the starting date to filter on
+     * @param dateTo, the ending date to filter on
+     * @param description, the description to filter on
+     * @param parsed, the status of the entry to filter on
+     * @param category, the category to filter on
      * @return the list of filtered entries
      */
     public List<ParsedEntry> filter(String account, String dateFrom, String dateTo, String description, String type, Boolean parsed, String category) {

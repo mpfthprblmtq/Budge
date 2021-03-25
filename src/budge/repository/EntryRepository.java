@@ -24,14 +24,6 @@ public class EntryRepository {
     }
 
     /**
-     * Returns the entry map (keys included)
-     * @return the map of entries
-     */
-    public Map<EntryKey, ParsedEntry> getEntryMap() {
-        return this.entries;
-    }
-
-    /**
      * Returns the list of parsed entries (no keys)
      * @return the list of parsed entries
      */
@@ -87,6 +79,22 @@ public class EntryRepository {
                 writer.write(entry.toString());
                 writer.write(Constants.NEWLINE);
             }
+            writer.close();
+        } catch (IOException e) {
+            throw new IOException("IOException while trying to write out to entries file!  " + e.getMessage());
+        }
+    }
+
+    /**
+     * Basically just replaces the contents of the entries file with the string given
+     * Called when editing entries
+     * @param s the string to print out to the file
+     * @throws IOException
+     */
+    private void writeOutEntriesFromString(String s) throws IOException {
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+            writer.write(s);
             writer.close();
         } catch (IOException e) {
             throw new IOException("IOException while trying to write out to entries file!  " + e.getMessage());
@@ -151,11 +159,16 @@ public class EntryRepository {
             throw new IOException("IOException while trying to write out to the entries file!  " + e.getMessage());
         }
     }
-    
-    public void updateEntries(Map<ParsedEntry, ParsedEntry> entriesToUpdate) throws EntryNotFoundException, IOException {
 
-        // extract keyset to form initial entries list
-        List<ParsedEntry> initialEntries = new ArrayList<>(entriesToUpdate.keySet());
+    /**
+     * Updates the entries based on the two arrays it's given
+     * NOTE, the indices of both arrays should match in a 1:1 ratio
+     * @param initialEntries, the list of initial entries to update
+     * @param newEntries, the list of updated entries
+     * @throws EntryNotFoundException if the entry to update wasn't found
+     * @throws IOException if there's IO issues
+     */
+    public void updateEntries(List<ParsedEntry> initialEntries, List<ParsedEntry> newEntries) throws EntryNotFoundException, IOException {
 
         try {
             BufferedReader reader = new BufferedReader(new FileReader(file));
@@ -170,19 +183,22 @@ public class EntryRepository {
             reader.close();
 
             // do the replace(s)
+            String newFileContents = StringUtils.EMPTY;
             List<ParsedEntry> initialEntriesNotFound = new ArrayList<>();
-            for (ParsedEntry initialEntry : initialEntries) {
-                String toReplace = initialEntry.toString();
-                String replaceWith = entriesToUpdate.get(initialEntry).toString();
-                String fileContents = inputBuffer.toString();
-                String newFileContents = fileContents.replace(toReplace, replaceWith);
+            String fileContents = inputBuffer.toString();
+            for (int i = 0; i < initialEntries.size(); i++) {
+                String toReplace = initialEntries.get(i).toString();
+                String replaceWith = newEntries.get(i).toString();
+
+                newFileContents = fileContents.replace(toReplace, replaceWith);
                 if (fileContents.equals(newFileContents)) {
                     // check to see if the reason why it "wasn't found" was that we're just overwriting the entry
                     // with the same entry
                     if (!toReplace.equals(replaceWith)) {
-                        initialEntriesNotFound.add(initialEntry);
+                        initialEntriesNotFound.add(initialEntries.get(i));
                     }
                 }
+                fileContents = newFileContents;
             }
 
             // check to see if there are any entries not updated
@@ -192,10 +208,13 @@ public class EntryRepository {
 
             // write out the new file contents to the file
             try {
-                writeOutEntries();
+                writeOutEntriesFromString(newFileContents);
             } catch (IOException e) {
                 throw new IOException("IOException while trying to write out to the entries file!  " + e.getMessage());
             }
+
+            // update the entries array
+            readInEntries();
 
         } catch (IOException e) {
             throw new IOException("IOException while trying to update entries!  " + e.getMessage());

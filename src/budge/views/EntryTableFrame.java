@@ -209,7 +209,7 @@ public class EntryTableFrame extends javax.swing.JFrame {
         if (validateFields()) {
 
             Boolean parsed;
-            if (account.equals(Constants.ANY)) {
+            if (account.equals(Constants.ANY) || StringUtils.isEmpty(account)) {
                 account = StringUtils.EMPTY;
             }
             if (StringUtils.isEmpty(dateFrom)) {
@@ -218,15 +218,15 @@ public class EntryTableFrame extends javax.swing.JFrame {
             if (StringUtils.isEmpty(dateTo)) {
                 dateTo = "01/01/2070";
             }
-            if (type.equals(Constants.ANY)) {
+            if (type.equals(Constants.ANY) || StringUtils.isEmpty(type)) {
                 type = StringUtils.EMPTY;
             }
-            if (parsedString.equals(Constants.ANY)) {
+            if (parsedString.equals(Constants.ANY) || StringUtils.isEmpty(parsedString)) {
                 parsed = null;
             } else {
                 parsed = parsedString.equals("Parsed");
             }
-            if (category.equals(Constants.ANY)) {
+            if (category.equals(Constants.ANY) || StringUtils.isEmpty(category)) {
                 category = StringUtils.EMPTY;
             }
             List<ParsedEntry> filteredEntries = entryService.filter(account, dateFrom, dateTo, description, type, parsed, category);

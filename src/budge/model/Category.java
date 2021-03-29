@@ -2,30 +2,32 @@ package budge.model;
 
 public enum Category {
 
-    GAS ("Gas"),
-    EATING_OUT ("Eating Out"),
-    RECORDS ("Records"),
+    ATM ("ATM"),
+    BANK_FEES ("Bank Fees"),
+    CAR_MAINTENANCE ("Car Maintenance"),
+    CAR_PAYMENT ("Car Payment"),
     CONCERTS ("Concerts"),
+    CREDIT_CARD_PAYMENT ("Credit Card Payment"),
+    DEPOSIT ("Deposit"),
+    EATING_OUT ("Eating Out"),
     ENTERTAINMENT ("Entertainment"),
+    GAS ("Gas"),
     GROCERIES ("Groceries"),
+    GROCERIES_HOME_SUPPLIES ("Groceries/Home Supplies"),
+    HOME_MAINTENANCE ("Home Maintenance"),
     HOME_SUPPLIES ("Home Supplies"),
     HUMAN_MAINTENANCE ("Human Maintenance"),
-    GROCERIES_HOME_SUPPLIES ("Groceries/Home Supplies"),
-    PET_STUFF ("Pet Stuff"),
-    MISCELLANEOUS ("Miscellaneous"),
-    UNCATEGORIZED ("Uncategorized"),
-    CAR_PAYMENT ("Car Payment"),
-    STUDENT_LOAN ("Student Loan"),
     INTEREST ("Interest"),
-    TRANSFER ("Transfer"),
+    MISCELLANEOUS ("Miscellaneous"),
+    PET_STUFF ("Pet Stuff"),
+    RECORDS ("Records"),
     SALARY ("Salary"),
-    DEPOSIT ("Deposit"),
-    CREDIT_CARD_PAYMENT ("Credit Card Payment"),
-    CAR_STUFF ("Car Stuff"),
-    VACATION ("Vacation"),
-    ATM ("ATM"),
+    STUDENT_LOAN ("Student Loan"),
+    TAXES("Taxes"),
+    TRANSFER ("Transfer"),
+    UNCATEGORIZED ("Uncategorized"),
     UTILITIES_BILLS("Utilities/Bills"),
-    TAXES("Taxes");
+    VACATION ("Vacation");
 
     private final String category;
 

@@ -122,14 +122,14 @@ public class EditModal extends javax.swing.JFrame {
             // type
             List<String> types = new ArrayList<>();
             for (ParsedEntry entry : entriesList) {
-                types.add(entry.getType().getType());
+                types.add(entry.getType() != null ? entry.getType().getType() : StringUtils.EMPTY);
             }
             typeTextField.setText(compareValuesInList(types));
 
             // method
             List<String> methods = new ArrayList<>();
             for(ParsedEntry entry : entriesList) {
-                methods.add(entry.getMethod().toString());
+                methods.add(entry.getMethod() != null ? entry.getMethod().toString() : StringUtils.EMPTY);
             }
             methodTextField.setText(compareValuesInList(methods));
 

@@ -1,6 +1,7 @@
 package budge;
 
 import budge.service.*;
+import budge.utils.StringUtils;
 import budge.views.Frame;
 import budge.views.RulesTableFrame;
 import budge.views.EntryTableFrame;
@@ -14,13 +15,16 @@ public class Main {
     static RulesTableFrame rulesTableFrame;
     
     // services
+    static DialogService dialogService;
     static StatementParsingService statementParsingService;
     static EntryService entryService;
     static RulesService rulesService;
     static AccountService accountService;
-    static DialogService dialogService;
     static BackupService backupService;
     static SavingsAccountService savingsAccountService;
+
+    // initial console message
+    static String initialMessage = StringUtils.EMPTY;
 
     /**
      * psvm
@@ -29,21 +33,25 @@ public class Main {
     public static void main(String[] args) {
 
         // init all the services
+        dialogService = new DialogService();
         entryService = new EntryService();
         rulesService = new RulesService();
         accountService = new AccountService();
         statementParsingService = new StatementParsingService();
-        dialogService = new DialogService();
         backupService = new BackupService();
         savingsAccountService = new SavingsAccountService();
 
         // init the frames
-        frame = new Frame();
+        frame = new Frame(initialMessage);
         entryTableFrame = new EntryTableFrame();
         rulesTableFrame = new RulesTableFrame();
 
         // show the main frame to start the application
         openFrame();
+    }
+
+    public static void addToInitialMessage(String message) {
+        initialMessage = initialMessage.concat(message);
     }
 
     /**

@@ -1,4 +1,4 @@
 Manifest-Version: 1.0
 Created-By: Pat Ripley
 Main-Class: budge.Main
-
+Class-Path: lib/poi-5.0.0/poi-5.0.0.jar lib/poi-5.0.0/poi-ooxml-5.0.0.jar

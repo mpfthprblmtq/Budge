@@ -6,7 +6,6 @@ budge.iml
 .idea
 
 # Netbeans-specific
-build.xml
 nbproject
 lib/CopyLibs
 lib/nblibraries.properties
@@ -17,3 +16,4 @@ out
 
 # test files
 20*
+/dist/

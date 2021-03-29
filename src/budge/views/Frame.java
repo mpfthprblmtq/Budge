@@ -29,26 +29,30 @@ public class Frame extends javax.swing.JFrame {
     /**
      * Creates new form Frame
      */
-    public Frame() {
+    public Frame(String initialConsoleMessage) {
         // init the components
         // checks if we're in the EDT to prevent NoSuchElementExceptions and ArrayIndexOutOfBoundsExceptions
         if (SwingUtilities.isEventDispatchThread()) {
             initComponents();
             initFileDrop();
-            init();
+            init(initialConsoleMessage);
         } else {
             SwingUtilities.invokeLater(() -> {
                 initComponents();
                 initFileDrop();
-                init();
+                init(initialConsoleMessage);
             });
         }
+
     }
 
     /**
      * Inits some miscellaneous stuff
      */
-    private void init() {
+    private void init(String initialConsoleMessage) {
+        if (StringUtils.isNotEmpty(initialConsoleMessage)) {
+            updateConsole(initialConsoleMessage.substring(1));
+        }
         updateConsole(entryService.getEntries().size() + " entries loaded!");
         if (entryService.getEntries().size() > 0) {
             reprocessButton.setEnabled(true);

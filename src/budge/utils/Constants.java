@@ -4,6 +4,20 @@ import java.awt.*;
 
 public class Constants {
 
+    // hardened version
+    // THIS HAS TO BE IN THIS FILE, DO NOT EDIT OR REMOVE THE FOLLOWING LINE
+    final String version = "0.1.0";
+    // THIS HAS TO BE IN THIS FILE, DO NOT EDIT OR REMOVE THE PREVIOUS LINE
+
+    public static final String ACCOUNTS_FILE_PATH =
+            System.getProperty("user.home") + "/Library/Application Support/budge/repository/accounts.csv";
+    public static final String ENTRIES_FILE_PATH =
+            System.getProperty("user.home") + "/Library/Application Support/budge/repository/entries.csv";
+    public static final String RULES_FILE_PATH =
+            System.getProperty("user.home") + "/Library/Application Support/budge/repository/rules.csv";
+    public static final String SAVINGS_ENTRIES_FILE_PATH =
+            System.getProperty("user.home") + "/Library/Application Support/budge/repository/savings-entries.csv";
+
     public static final String SPACE = " ";
     public static final String COMMA = ",";
     public static final String DASH = "-";

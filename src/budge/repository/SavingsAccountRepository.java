@@ -5,6 +5,7 @@ import budge.model.SavingsEntry;
 import budge.model.exceptions.savings_entry.DuplicateSavingsEntryException;
 import budge.model.exceptions.savings_entry.SavingsEntryNotFoundException;
 import budge.utils.Constants;
+import budge.utils.FIleUtils;
 import budge.utils.Utils;
 
 import java.io.*;
@@ -16,13 +17,16 @@ public class SavingsAccountRepository {
 
     // globals
     List<SavingsEntry> savingsAccountEntries;
-    File file = new File("src/resources/repository/savings-entries.csv");
+    File file;
 
     /**
      * Reads in all the SavingsEntry objects currently in the store
      */
     public SavingsAccountRepository() {
-        readInSavingsEntries();
+        if (FIleUtils.initializeFile(Constants.SAVINGS_ENTRIES_FILE_PATH)) {
+            file = new File(Constants.SAVINGS_ENTRIES_FILE_PATH);
+            readInSavingsEntries();
+        }
     }
 
     /**

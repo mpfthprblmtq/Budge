@@ -1,25 +1,28 @@
 package budge.repository;
 
 import budge.model.Account;
-import budge.model.EntryKey;
-import budge.model.ParsedEntry;
+import budge.utils.Constants;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+
+import static budge.utils.FIleUtils.initializeFile;
 
 public class AccountRepository {
 
+    // globals
     Map<String, Account> accounts;
+    File file;
 
     public AccountRepository() {
-        readInAccounts();
+        if (initializeFile(Constants.ACCOUNTS_FILE_PATH)) {
+            file = new File(Constants.ACCOUNTS_FILE_PATH);
+            readInAccounts();
+        }
     }
 
     private void readInAccounts() {
-        File file = new File("src/resources/repository/accounts.csv");
         accounts = new HashMap<>();
         String line;
         BufferedReader reader = null;

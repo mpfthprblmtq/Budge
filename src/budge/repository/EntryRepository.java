@@ -9,18 +9,22 @@ import budge.utils.StringUtils;
 import java.io.*;
 import java.util.*;
 
+import static budge.utils.FIleUtils.initializeFile;
+
 public class EntryRepository {
 
     // globals
     Map<EntryKey, ParsedEntry> entries;
-    File file = new File("src/resources/repository/entries.csv");
+    File file;
 
     /**
      * Default constructor, initializes the entries global and reads in all the entries
      */
     public EntryRepository() {
-        entries = new HashMap<>();
-        readInEntries();
+        if (initializeFile(Constants.ENTRIES_FILE_PATH)) {
+            file = new File(Constants.ENTRIES_FILE_PATH);
+            readInEntries();
+        }
     }
 
     /**

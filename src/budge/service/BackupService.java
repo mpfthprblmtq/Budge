@@ -15,7 +15,7 @@ public class BackupService {
 
     // global ivar
     private final String appSupportPath = System.getProperty("user.home") + "/Library/Application Support/Budge/";
-    private final String backupDirPath = "Backup/";
+    private final String backupDirPath = "backup/";
 
     /**
      * Method that copies the contents of the repository directory to Application Support

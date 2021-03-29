@@ -11,18 +11,22 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import static budge.utils.FIleUtils.initializeFile;
+
 public class RulesRepository {
 
     // globals
     List<Rule> rules;
-    File file = new File("src/resources/repository/rules.csv");
+    File file;
 
     /**
      * Default constructor, initializes the rules global and reads in all the rules
      */
     public RulesRepository() {
-        rules = new ArrayList<>();
-        readInRules();
+        if (initializeFile(Constants.RULES_FILE_PATH)) {
+            file = new File(Constants.RULES_FILE_PATH);
+            readInRules();
+        }
     }
 
     /**
@@ -37,6 +41,7 @@ public class RulesRepository {
      * Reads in the rules from the file and stores them in the rules global
      */
     private void readInRules() {
+        rules = new ArrayList<>();
         String line;
         BufferedReader reader = null;
 

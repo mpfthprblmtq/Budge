@@ -17,6 +17,7 @@ import budge.utils.Utils;
 import budge.views.modals.EditModal;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -95,6 +96,11 @@ public class EntryTableFrame extends javax.swing.JFrame {
         FormUtils.setColumnWidth(5, 100, table);
         FormUtils.setColumnWidth(6, 175, table);
 
+        // set the amount column right aligned
+        DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
+        rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
+        table.getColumnModel().getColumn(5).setCellRenderer(rightRenderer);
+
         table.removeColumn(table.getColumnModel().getColumn(7));
 
         table.setAutoCreateRowSorter(true);
@@ -140,7 +146,7 @@ public class EntryTableFrame extends javax.swing.JFrame {
                             Utils.formatDate(entry.getDate()) : Utils.formatDate(entry.getTransactionDate()),
                     entry.getType() != null ? entry.getType().getType() : StringUtils.EMPTY,
                     entry.getDescription() == null ? entry.getDescription() : entry.getDescription(),
-                    Utils.formatDoubleForCurrency(Double.valueOf(entry.getParsedAmount())),
+                    cleanAmountForTable(entry.getParsedAmount()),
                     entry.getCategory() != null ? entry.getCategory().getCategory() : StringUtils.EMPTY,
                     entry.getKey()
             });
@@ -153,6 +159,18 @@ public class EntryTableFrame extends javax.swing.JFrame {
 
         statusLabel.setText(entries.size() + " entries loaded! (" +
                 (entries.size() - nonParsedEntries) + " entries parsed, " + nonParsedEntries + " non-parsed)");
+    }
+
+    private String cleanAmountForTable(String amount) {
+        String parsedAmount = Utils.formatDoubleForCurrency(Double.valueOf(amount));
+        if (parsedAmount.contains("-")) {
+            parsedAmount = "(".concat(parsedAmount.replace("-", StringUtils.EMPTY)).concat(")")
+                    .concat(Constants.SPACE).concat(Constants.SPACE);
+        } else {
+            parsedAmount = Constants.SPACE.concat(parsedAmount)
+                    .concat(Constants.SPACE).concat(Constants.SPACE).concat(Constants.SPACE);
+        }
+        return parsedAmount;
     }
 
     public void updateStatusLabel(String text) {
